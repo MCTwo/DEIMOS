@@ -2,8 +2,8 @@ import pyfits
 import numpy
 
 #user input
-fitsfile = '/sandbox/deimos/zspec.dawson.1rxs1B.2013-02-18.fits'
-outputfile = '/sandbox/deimos/1rxs1B/zspec.dawson.1rxs1B.2013-02-18.txt'
+fitsfile = '/sandbox/deimos/zspec.dawson.zwcl1B.2013-05-12.fits'
+outputfile = '/sandbox/deimos/zwcl1B/zspec.dawson.zwcl1B.2013-05-12.txt'
 
 hdulist = pyfits.open(fitsfile)
 

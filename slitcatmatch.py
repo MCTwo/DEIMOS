@@ -10,15 +10,15 @@ import tools
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/1rxs2B/2013jan16/'
-binfile = '1rxs2B.bintabs.fits' # probably don't need this if have maskname
-maskname = '1rxs2B'
-zspecfile = 'zspec.dawson.1rxs2B.2013-02-22.fits'
+path = '/sandbox/deimos/zwcl1B/2013jan16/'
+binfile = 'zwcl1B.bintabs.fits' # probably don't need this if have maskname
+maskname = 'zwcl1B'
+zspecfile = 'zspec.dawson.zwcl1B.2013-05-12.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
-imgcat = '/Users/dawson/SkyDrive/Research/Clusters/1RXSJ0603/toothbrush_RVI.cat' #path/name of the image catalog
+imgcat = '/Users/dawson/SkyDrive/Research/Clusters/ZWCL0008/zwcl0008_RVI.cat' #path/name of the image catalog
 objkey = 'NUMBERR' #ttype name of the unique object id column
 imgcoord = ('raR','decR') #ttype name of the ra and dec columns in the image catalog
-outputfile = '/sandbox/deimos/1rxs2B/matchcat_1rxs2B_rev0.txt'
+outputfile = '/sandbox/deimos/zwcl1B/matchcat_zwcl1B_rev0.txt'
 ###########################
 ### PROGRAM
 ###########################
