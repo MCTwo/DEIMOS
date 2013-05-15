@@ -18,6 +18,7 @@ tolerance = 2 #matching tolerance (arcsec) any objects within this separation wi
 imgcat = '/Users/dawson/SkyDrive/Research/Clusters/ZWCL0008/zwcl0008_RVI.cat' #path/name of the image catalog
 objkey = 'NUMBERR' #ttype name of the unique object id column
 imgcoord = ('raR','decR') #ttype name of the ra and dec columns in the image catalog
+mag = 'MAGR'
 outputfile = '/sandbox/deimos/zwcl1B/matchcat_zwcl1B_rev0.txt'
 ###########################
 ### PROGRAM
@@ -58,8 +59,9 @@ fh.write('#ttype6 = objid\n')
 fh.write('#ttype7 = ra_obj\n')
 fh.write('#ttype8 = dec_obj\n')
 fh.write('#ttype9 = matchdelta\n')
+fh.write('#ttype10 = mag\n')
 fh.close()
-def match(slit_i,which_trace,cat,key,coord,objkey,tolerance,outputfile):
+def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     #Filter the tables keeping only the current slit
     tb_s = tb_slits[tb_slits.field('SLITNAME')==slit_i]
     # slitid
@@ -133,6 +135,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,tolerance,outputfile):
         match_ra = cat_flt[0,key[coord[0]]]
         match_dec = cat_flt[0,key[coord[1]]]
         match_delta = delta[0]
+        match_mag = cat_flt[0,key[mag]]
     elif j == 0:
         if numpy.size(delta) != 0:
             # sort match_delta smallest to largest
@@ -142,47 +145,49 @@ def match(slit_i,which_trace,cat,key,coord,objkey,tolerance,outputfile):
             print 'slitcatmatch: No catalog matches were found for this trace.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
             print 'The closest objects to the trace are:'
-            print 'Object\tRA\t\tdec\tSeparation (arcsec)'
+            print 'Object\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
             for k in range(numpy.size(delta)):
-                print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k])
+                print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
             print '{0}\tSelect none.'.format(numpy.size(delta))
             selection = raw_input('Enter the number of the correct object match: ')
             if numpy.size(numpy.arange(k+1)==int(selection))==0:
                 selection = rawinput("Input invalid. Please enter a valid number.: ")
             if selection == str(numpy.size(delta)):
                 # Don't associate the trace with an object
-                match_id = match_ra = match_dec = match_delta = -99
+                match_id = match_ra = match_dec = match_delta = match_mag = -99
             elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
                 selection=int(selection)
                 match_id = cat_flt[selection,key_img[objkey]]
                 match_ra = cat_flt[selection,key_img[coord[0]]]
                 match_dec = cat_flt[selection,key_img[coord[1]]]
                 match_delta = delta[selection]
+                match_mag = cat_flt[selection,key_img[mag]]
         else:
             print 'slitcatmatch: No catalog matches were found for this trace.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
-            match_id = match_ra = match_dec = match_delta = -99
+            match_id = match_ra = match_dec = match_delta = match_mag = -99
     elif j > 1:
         cat_flt = cat_flt[delta<tolerance,:]
         delta = delta[delta<tolerance]
         print 'slitcatmatch: More than one matches satisfy the separation tolerence.'
         print 'Slit {0} {1}'.format(slit_i,which_trace)
-        print 'Match\tRA\t\tdec\tSeparation (arcsec)'
+        print 'Match\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
         for k in range(j):
-            print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k])
+            print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
         print '{0}\tSelect none.'.format(j)
         selection = raw_input('Enter the number of the correct match: ')
         if numpy.size(numpy.arange(k+1)==int(selection))==0:
             selection = rawinput("Input invalid. Please enter a valid number.: ")
         if selection == str(j):
             # Don't associate the trace with an object
-            match_id = match_ra = match_dec = match_delta = -99
+            match_id = match_ra = match_dec = match_delta = match_mag = -99
         elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
             selection=int(selection)
             match_id = cat_flt[selection,key_img[objkey]]
             match_ra = cat_flt[selection,key_img[coord[0]]]
             match_dec = cat_flt[selection,key_img[coord[1]]]
             match_delta = delta[selection]
+            match_mag = cat_flt[selection,key_img[mag]]
 #    print maskname
 #    print slit_i
 #    print which_trace
@@ -194,9 +199,9 @@ def match(slit_i,which_trace,cat,key,coord,objkey,tolerance,outputfile):
 #    print match_dec
 #    print match_delta
     fh = open(outputfile,'a')
-    fh.write('{0}\t{1}\t{2}\t{3:0.1f}\t{4:0.6f}\t{5:0.5f}\t{6}\t{7:0.6f}\t{8:0.5f}\t{9:0.2f}\n'
+    fh.write('{0}\t{1}\t{2}\t{3:0.1f}\t{4:0.6f}\t{5:0.5f}\t{6}\t{7:0.6f}\t{8:0.5f}\t{9:0.2f}\t{10:0.1f}\n'
             .format(maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,
-                    match_id,match_ra,match_dec,match_delta))
+                    match_id,match_ra,match_dec,match_delta,match_mag))
     fh.close()
     
 # Analyze each trace for all slits and associate with photometric object
@@ -227,7 +232,7 @@ for slit_i in slitnumbers:
         print 'slitcatmatch: There is no spec1d trace file for slit number {}'.format(slit_i)
         continue
     else:
-        match(slit_i,'primary',cat_img,key_img,imgcoord,objkey,tolerance,outputfile)
+        match(slit_i,'primary',cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
     
     # check if there is a serendip trace and if so then attempt to match with catalog
     # works for up to 5 serendips
@@ -238,4 +243,4 @@ for slit_i in slitnumbers:
             continue
         else:
             # the file exists, try to match the object
-            match(slit_i,'serendip{}'.format(i),cat_img,key_img,imgcoord,objkey,tolerance,outputfile)
+            match(slit_i,'serendip{}'.format(i),cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
