@@ -10,16 +10,16 @@ import tools
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/zwcl1B/2013jan16/'
-binfile = 'zwcl1B.bintabs.fits' # probably don't need this if have maskname
-maskname = 'zwcl1B'
-zspecfile = 'zspec.dawson.zwcl1B.2013-05-12.fits'
+path = '/sandbox/deimos/a7461C/2013jan16/'
+binfile = 'a7461C.bintabs.fits' # probably don't need this if have maskname
+maskname = 'a7461C'
+zspecfile = 'zspec.dawson.a7461C.2013-05-27.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
-imgcat = '/Users/dawson/SkyDrive/Research/Clusters/ZWCL0008/zwcl0008_RVI.cat' #path/name of the image catalog
-objkey = 'NUMBERR' #ttype name of the unique object id column
-imgcoord = ('raR','decR') #ttype name of the ra and dec columns in the image catalog
-mag = 'MAGR'
-outputfile = '/sandbox/deimos/zwcl1B/matchcat_zwcl1B_rev0.txt'
+imgcat = '/Users/dawson/SkyDrive/Research/Clusters/A746/a746_sdsscat_shortobjid.txt' #path/name of the image catalog
+objkey = 'objID' #ttype name of the unique object id column
+imgcoord = ('ra','dec') #ttype name of the ra and dec columns in the image catalog
+mag = 'dered_r'
+outputfile = '/sandbox/deimos/a7461C/matchcat_a746_rev0.txt'
 ###########################
 ### PROGRAM
 ###########################
