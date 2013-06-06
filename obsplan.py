@@ -522,10 +522,31 @@ for i in numpy.arange(numpy.shape(cat)[0]):
 F.close()
 
    
-#pylab.show()              
+#pylab.show()
+# I am just playing with the following for now.
 
-
-
-
-
+def optimalPA(h,delta,phi):
+    '''
+    This is based on:
+    Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715–721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
     
+    Input:
+    phi = [float; units=degrees] observers latitude
+    h = [float; units=hours] object's hour angle (h is + if west of the meridian)
+    delta = [float; units=degrees] object's declination
+    '''
+    from math import pi,sin,cos,asin
+    d2r = pi/180.
+    phi *= d2r
+    if h < 0:
+        sign = -1
+        h = -h
+    else:
+        sign = 1
+    h = h*15*d2r
+    delta *= d2r
+    eta_rad = sign*asin(sin(h)*cos(phi) / 
+                        (1-(sin(phi)*sin(delta) +
+                            cos(phi)*cos(delta)*cos(h))**2)**(0.5))
+    eta_deg = eta_rad/d2r
+    return eta_deg
