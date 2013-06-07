@@ -543,15 +543,19 @@ def objectPA(H,delta,phi):
     phi *= d2r    
     H = H*15*d2r
     delta *= d2r
-    
+    if H < 0:
+        sign = -1
+        H = -H
+    else:
+        sign = 1  
     denom = tan(phi)*cos(delta)-sin(delta)*cos(H)
     q = atan(sin(H)/denom)
     q = q/d2r
     if denom < 0:
         q += 180
-    return q
+    return sign*q
 
-def optimalPA(H,delta,phi):
+def optimalPA(H,delta,phi,pa_mask):
     '''
     As recommended by: 
     Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715–721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
@@ -567,6 +571,8 @@ def optimalPA(H,delta,phi):
     phi = [float; units=degrees] observers latitude
     H = [float; units=hours] object's hour angle (H is + if west of the meridian)
     delta = [float; units=degrees] object's declination
+    pa_mask = [float; units=degrees] parallactic angle of the mask
     '''
     from math import pi,sin,cos,asin
+    # the optimal slit position angle is the parallactic angle of the object
     pa_obj = objectPA(H,delta,phi)
