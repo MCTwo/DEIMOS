@@ -8,7 +8,10 @@ def objectPA(H,delta,phi):
     
     denom = tan(phi)*cos(delta)-sin(delta)*cos(H)
     q = atan(sin(H)/denom)
-    return q/d2r
+    q = q/d2r
+    if denom < 0:
+        q += 180
+    return q
 
 def optimalPA(H,delta,phi):
     '''

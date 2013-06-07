@@ -526,6 +526,18 @@ F.close()
 # I am just playing with the following for now.
 
 def objectPA(H,delta,phi):
+    '''
+    This function calculates the paralactic angle (PA) of an astronomical object
+    a the instant of its given hour angle (H), the declination of the object 
+    (delta), and the geographical latitude of the observer (phi). The
+    calculation is based on Equation 14.1 of Jean Meeus' Astronomical
+    Algorithms (2nd edition).
+    
+    Input:
+    phi = [float; units=degrees] observers latitude
+    H = [float; units=hours] object's hour angle (H is + if west of the meridian)
+    delta = [float; units=degrees] object's declination
+    '''
     from math import atan, tan, cos, sin, pi
     d2r = pi/180.
     phi *= d2r    
@@ -534,12 +546,22 @@ def objectPA(H,delta,phi):
     
     denom = tan(phi)*cos(delta)-sin(delta)*cos(H)
     q = atan(sin(H)/denom)
-    return q/d2r
+    q = q/d2r
+    if denom < 0:
+        q += 180
+    return q
 
 def optimalPA(H,delta,phi):
     '''
-    This is based on:
+    As recommended by: 
     Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715–721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
+    
+    The spectral slit should be as much aligned with the axis along the
+    horizon, object and zenith. Thus the position angle of the slit (as defined 
+    by the angle + from north toward east) should equal the parallactic angle
+    of the object. This is not always possible given the bounds placed on the
+    slit orentation with respect to the slitmask, thus this funciton determines
+    the best possible slit position angle with respect to the slitmask.
     
     Input:
     phi = [float; units=degrees] observers latitude
@@ -548,20 +570,3 @@ def optimalPA(H,delta,phi):
     '''
     from math import pi,sin,cos,asin
     pa_obj = objectPA(H,delta,phi)
-    d2r = pi/180.
-    phi *= d2r
-    if H < 0:
-        sign = -1
-        H = -H
-    else:
-        sign = 1
-    H = H*15*d2r
-    delta *= d2r
-    eta_rad = sign*asin(sin(H)*cos(phi) / 
-                        (1-(sin(phi)*sin(delta) +
-                            cos(phi)*cos(delta)*cos(H))**2)**(0.5))
-    eta_deg = eta_rad/d2r
-    
-    if sign*pa_obj < 0:
-        eta_deg = sign*(180-sign*eta_deg)
-    return eta_deg
