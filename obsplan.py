@@ -47,6 +47,7 @@ import numpy
 import pylab
 from math import floor
 import tools #module written by Will
+import sys
 
 ###########################################################################
 ## USER INPUT 
@@ -537,6 +538,10 @@ def objectPA(H,delta,phi):
     phi = [float; units=degrees] observers latitude
     H = [float; units=hours] object's hour angle (H is + if west of the meridian)
     delta = [float; units=degrees] object's declination
+    
+    Output:
+    parallactic angle of the object (-180 to 180 degrees) measured + from north
+    ccw towards east
     '''
     from math import atan, tan, cos, sin, pi
     d2r = pi/180.
@@ -555,7 +560,7 @@ def objectPA(H,delta,phi):
         q += 180
     return sign*q
 
-def optimalPA(H,delta,phi,pa_mask):
+def optimalPA(H,delta,phi,pa_mask,relPA_min=5,relPA_max=30):
     '''
     As recommended by: 
     Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715–721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
@@ -572,7 +577,48 @@ def optimalPA(H,delta,phi,pa_mask):
     H = [float; units=hours] object's hour angle (H is + if west of the meridian)
     delta = [float; units=degrees] object's declination
     pa_mask = [float; units=degrees] parallactic angle of the mask
+    relPA_min = [float; units=degrees] minimum absolute angle between the slit
+       pa and the mask pa
+    relPA_max = [float; units=degrees] maximum absolute angle between the slit
+       pa and the mask pa
     '''
     from math import pi,sin,cos,asin
+    # test that pa_mask is defined between 0 and 360 degrees
+    test_pa_mask = numpy.logical_and(pa_mask >= 0, pa_mask <= 360)
+    if ~test_pa_mask:
+        print 'obsplan.optimalPA: error, mask_pa must be defined between 0 and 360 degrees,check that ds9 mask region is defined appropriately, exiting'
+        sys.exit()
+        
     # the optimal slit position angle is the parallactic angle of the object
     pa_obj = objectPA(H,delta,phi)
+    
+    # test to make sure that the pa_obj is in the range -180 to 180 degrees
+    test_pa_obj = numpy.logical_and(pa_obj >=-180, pa_obj <= 180)
+    if ~test_pa_obj:
+        print 'obsplan.optimalPA: error, the pa_obj returned from objectPA is not in the expected range of -180 to 180 degrees, exiting'
+        sys.exit()
+        
+    # due to symmetery we can simplify the problem
+    if pa_obj < 0:
+        pa_obj += 180
+    if pa_mask > 180:
+        # we do not want to redefine pa_mask since it is not really symmetric
+        # due to the offcenter guider cam and other asymmetries
+        pa_mask_prime = pa_mask-180
+    
+    # Determine the best allowable slit PA
+    if pa_mask_prime >= pa_obj:
+        if pa_mask_prime-pa_obj < relPA_min:
+            pa_slit = pa_mask_prime-relPA_min
+        elif pa_mask_prime-pa_obj < relPA_max:
+            pa_slit = pa_obj
+        else:
+            pa_slit = pa_mask_prime-relPA_max
+    elif pa_mask_prime < pa_obj:
+        if pa_obj-pa_mask_prime < relPA_min:
+            pa_slit = pa_mask_prime+relPA_min
+        elif pa_obj-pa_mask_prime < relPA_max:
+            pa_slit = pa_obj
+        else:
+            pa_slit = pa_mask_prime+relPA_max
+    return pa_slit
