@@ -118,12 +118,16 @@ output = 'candidate_'+prefix+'.txt'
 print 'Writing list of candidate stars to file "'+output+'"'
 F=open(output,'w')
 for i in cat.index:
+    #Warning if your OBJID is longer than 18 digit 
+    #You need to change your output line 
     obj = cat['objID'][i]
     ra = cat['ra'][i]
     ra = str(tools.deg2ra(ra,":"))
     dec = cat['dec'][i]
     dec = str(tools.deg2dec(dec,":"))
     #rmag = cat[i,key['dered_r']]
+    #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+    #You need to change the digit precision of your output line 
     output= 'F.write("'+'{0:18d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
     F.write(output)
 
@@ -142,9 +146,13 @@ for i in cat.index:
     ra = cat['ra'][i]
     dec = cat['dec'][i]
     size = cat['deVRad_r'][i]+10
+    #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+    #You need to change the digit precision of your output line 
     obj = cat['objID'][i]
     R = cat['dered_r'][i]
     #type = cat['type'][i]
+    #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+    #You need to change the digit precision of your output line 
     F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:18d}--{1:1.2f}'.format(obj,R)+'}\n')
 F.close()
 

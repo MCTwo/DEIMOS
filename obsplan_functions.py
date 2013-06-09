@@ -340,7 +340,7 @@ def return_objects_in_mask_region(cat,regfile):
            {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
     return cat,box 
 
-def write_dsim_header(F):
+def write_dsim_header(F,prefix):
     F.write('#This catalog was created by obsplan.py and is intended to be used \n')
     F.write('#as input to the deimos slitmask software following the format \n')
     F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
@@ -578,33 +578,34 @@ def exclude_objects(cat, excludeObj_file):
     print 'obsplan exclusion: {0} rows were removed from the catalog with {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
     return cat
 
-def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
-    '''
-    Write the lines of the stars to dsim input format
-    To add more documentation
-    '''
-    if output_prefix == None and F == None:
-        print 'You have to specify where to output your stars'
-    if output_prefix != None: 
-        output = output_prefix+'.txt'
-        print 'Writing list of candidate stars to file '+output
-        F=open(output,'w')
-
-    #To add warning if both prefix and F is present
-        
-    for i in cat.index:
-        obj = cat['objID']
-        ra = cat['ra']
-        ra = str(tools.deg2ra(ra,":"))
-        dec = cat['dec']
-        dec = str(tools.deg2dec(dec,":"))
-        #rmag = cat[i,key['dered_r']]
-        output= 'F.write("'+'{0:4.0f}\t'.format(obj)+ra+'\t'+ dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
-        F.write(output)
-
-    if prefix !=None: 
-        F.close()
+#def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
+#    '''
+#    Status: work in progress
+#    Write the lines of the stars to dsim input format
+#    To add more documentation
+#    '''
+#    if output_prefix == None and F == None:
+#        print 'You have to specify where to output your stars'
+#    if output_prefix != None: 
+#        output = output_prefix+'.txt'
+#        print 'Writing list of candidate stars to file '+output
+#        F=open(output,'w')
 #
+#    #To add warning if both prefix and F is present
+#        
+#    for i in cat.index:
+#        obj = cat['objID']
+#        ra = cat['ra']
+#        ra = str(tools.deg2ra(ra,":"))
+#        dec = cat['dec']
+#        dec = str(tools.deg2dec(dec,":"))
+#        #rmag = cat[i,key['dered_r']]
+#        output= 'F.write("'+'{0:4.0f}\t'.format(obj)+ra+'\t'+ dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
+#        F.write(output)
+#
+#    if prefix !=None: 
+#        F.close()
+
 def write_circle_reg(cat,output_prefix):
     outputname = prefix+'_circles.reg'
     F = open(outputname,'w')
