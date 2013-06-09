@@ -52,7 +52,7 @@ print 'obsplan: filter out galaxies so that only stars remain'
 #read sdss description of having 6 as stars , 3 as galaxies
 #http://tdc-www.harvard.edu/catalogs/sdss.html
 cat = fcn.filter_catalog_dataframe(cat,'type',6,6)
-cat = fcn.filter_catalog_dataframe(cat,'dered_r',15,19)
+cat = fcn.filter_catalog_dataframe(cat,'dered_r',15,19.5)
 
 ################################################################
 # find all the box regions
@@ -124,7 +124,7 @@ for i in cat.index:
     dec = cat['dec'][i]
     dec = str(tools.deg2dec(dec,":"))
     #rmag = cat[i,key['dered_r']]
-    output= 'F.write("'+'{0:4.0f}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
+    output= 'F.write("'+'{0:18d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
     F.write(output)
 
 
@@ -145,7 +145,7 @@ for i in cat.index:
     obj = cat['objID'][i]
     R = cat['dered_r'][i]
     #type = cat['type'][i]
-    F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:0.0f}--{1:1.2f}'.format(obj,R)+'}\n')
+    F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:18d}--{1:1.2f}'.format(obj,R)+'}\n')
 F.close()
 
 

@@ -24,9 +24,9 @@ import obsplan_functions as fcn
 #-------------------------------------------------------------------------------
 catalog = 'zwcl2341_sdsscat.csv'
 maskNumber = 1 #2 
-prefix = 'zwcl2341_rev0_m1_'
+prefix = 'zwcl2341_rev0_m0_'
 regfile1 = 'mask0_rev0.reg'
-regfile2 = 'mask2_rev0.reg'
+#regfile2 = 'mask1_rev0.reg'
 R_bounds = (0,23.5)
 #the amount of sky on either side of galaxy to include in slit (arcsec)
 sky = (1.0, 1.0) 
@@ -40,6 +40,7 @@ exclude_file = None
 #na_values tells pandas to put that string expression as np.na values
 #for example of how to read other table types see the end of the file
 cat = pd.read_csv(catalog,na_values='null')
+cat=cat.drop_duplicates(cols='objID')
 
 
 #filter out other astronomical objects and leave only galaxies 
