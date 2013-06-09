@@ -22,6 +22,7 @@ import pdb
 
 import make_masks_functions as fcn
 import pandas as pd 
+import pdb
 
 ###########################################################################
 #USER INPUT
@@ -109,6 +110,14 @@ Nfin = cat.shape[0]
 Ncut = Nint - Nfin
 print 'obsplan: {0} rows were removed from the catalog with {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
 
+#-------------
+#process the disgusting SDSS 19-digit id so that there 's only 16-digits
+#remaining for dsim input
+#------------
+cat['objID'] = cat['objID']-1230000000000000000
+for i in cat.index:
+    print '{0:19d}'.format(cat['objID'][i])
+
 #######################################################
 #create a file that writes out properties of the candidate stars
 #######################################################
@@ -126,9 +135,9 @@ for i in cat.index:
     dec = cat['dec'][i]
     dec = str(tools.deg2dec(dec,":"))
     #rmag = cat[i,key['dered_r']]
-    #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+    #!!!!Warning!!!! if your OBJID is longer than 19 digit 
     #You need to change the digit precision of your output line 
-    output= 'F.write("'+'{0:18d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
+    output= 'F.write("'+'{0:19d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
     F.write(output)
 
 
@@ -151,9 +160,9 @@ for i in cat.index:
     obj = cat['objID'][i]
     R = cat['dered_r'][i]
     #type = cat['type'][i]
-    #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+    #!!!!Warning!!!! if your OBJID is longer than 19 digit 
     #You need to change the digit precision of your output line 
-    F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:18d}--{1:1.2f}'.format(obj,R)+'}\n')
+    F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:19d}--{1:1.2f}'.format(obj,R)+'}\n')
 F.close()
 
 
