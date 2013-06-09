@@ -362,34 +362,38 @@ def write_dsim_header(F):
     F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
             .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))
 
-def write_guide_stars(F, cat):
-    '''
-    Guide stars are in the guide camera region with Preselect code = -1 
-    INPUT:
-    F = filestream for writing the file out to 
-    cat = dataframe catalog of the stars
-    
-    Feature to be implemented: with a use of pyds9 
-    we should be able to select and pick regions without leaving python
-    and outputting the list of selected stars directly for writing 
-    
-    #a sample line should look like
-    #F.write("176676037	10:54:07.305	54:56:42.927	2000	16.33	R	-1	0	1\n")
-    '''
-    for i in cat.index:
-        F.write("{0} {1}:{2} 2000	{3}	R	-1	0	1\n".format(
-            cat['objID'][i],cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
+#def write_guide_stars(F, cat):
+#    '''
+#    Status: WORK IN PROGRESS
+#
+#    Guide stars are in the guide camera region with Preselect code = -1 
+#    INPUT:
+#    F = filestream for writing the file out to 
+#    cat = dataframe catalog of the stars
+#    
+#    Feature to be implemented: with a use of pyds9 
+#    we should be able to select and pick regions without leaving python
+#    and outputting the list of selected stars directly for writing 
+#    
+#    #a sample line should look like
+#    #F.write("176676037	10:54:07.305	54:56:42.927	2000	16.33	R	-1	0	1\n")
+#    '''
+#    for i in cat.index:
+#        F.write("{0} {1}:{2} 2000	{3}	R	-1	0	1\n".format(
+#            cat['objID'][i],cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
+#
+#    return
 
-    return
-
-def write_align_stars(filestream, align_star_cat):
-    #sample line 
-    #F.write("412932112	10:54:44.062	54:48:23.996	2000	17.91	R	-2	0	1\n")
-    
-    for i in cat.index:
-        F.write("{0} {1} {2} 2000	{3}	R	-2	0	1\n".format(cat['objID'][i],
-           cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
-    return
+#def write_align_stars(filestream, align_star_cat):
+#    ''''
+#    Work in progress
+#    #sample line 
+#    #F.write("412932112	10:54:44.062	54:48:23.996	2000	17.91	R	-2	0	1\n")
+#    '''
+#    for i in cat.index:
+#        F.write("{0} {1} {2} 2000	{3}	R	-2	0	1\n".format(cat['objID'][i],
+#           cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
+#    return
 
 def write_galaxies_to_dsim(F, cat,  sky):
     '''
