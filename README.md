@@ -1,6 +1,5 @@
-DEIMOS
-======
-
-Programs useful for Keck DEIMOS planning, observing, and reduction.  Note that most of this code
-works but has not been proven entirely stable.  At times I know that I (wd) have incorporated clugy 
-fixes just to get the job done. It is also not as well commented as it should be.
+#Planning work for making DEIMOS slitmasks
+=====================
+Written each steps as functions for easy swapping out codes
+Warning: Not all functions work as well as I want them to
+Please send feedback / bug reports.
