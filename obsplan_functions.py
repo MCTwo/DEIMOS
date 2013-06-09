@@ -539,11 +539,10 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     
     #last time when making the slits we had perpendicular slits
     #and I had to change the PAround functions' inputs to 
-    #cat = PAround(cat, PA_field,0,60,60,maskPA)
-    #cat = PAround(cat, PA_field,270,330,-30,maskPA)
+    cat = PAround(cat, PA_field,270,330,-30,maskPA)
 
     #here 's the original line
-    cat = PAround(cat, PA_field,-90,-30,-30,maskPA)
+    #cat = PAround(cat, PA_field,-90,-30,-30,maskPA)
     
     if plot_diag ==True:
         plt.ylabel('PA angle')
