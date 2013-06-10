@@ -46,7 +46,7 @@ regfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/mask1_rev0.reg'
 ## Slit size inputs
 
 #The amount of sky on either side of the galaxy to include in slit (arcsec)
-sky = (1,1)
+sky = (1.5,1.5)
 # The ttype index of the galaxy size. If one value is entered then the galaxy
 # will be assumed circular, of three values are entered the the galaxy will be
 # assumed elliptical with major axis radius (a), and minor axis radius (b), and
@@ -69,8 +69,11 @@ as_ids = (775311757, 775311662, 530933312, 530868425, 530868397)
 ## Exclusion list input
 
 # ttype catalog of galaxies to exclude from mask (excludes matching ttype = objid). exobjid_ttype is ['string'] ttype name of the objid column in the exfile, the objid's should correspond to some of the objid's in the objid array
-exfile = None #a string (e.g. 'exclusion.txt') or None
-exobjid_ttype = 'objid'
+
+exfile = None
+exobjid_ttype = None
+#exfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/macs1752_Mask1_rev0_maskcat.txt' #a string (e.g. 'exclusion.txt') or None
+#exobjid_ttype = 'objID'
 
 ## Priority code (i.e. selection weight) input
 
