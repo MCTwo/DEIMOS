@@ -24,7 +24,7 @@ import obsplan_functions as fcn
 #-------------------------------------------------------------------------------
 catalog = 'zwcl2341_sdsscat.csv'
 maskNumber = 1 #2 
-prefix = 'zwcl2341_rev0_m0_'
+prefix = 'zwcl2341_rev0_m0'
 regfile1 = 'mask0_rev0.reg'
 #regfile2 = 'mask1_rev0.reg'
 R_bounds = (0,23.5)
@@ -79,9 +79,9 @@ PA_field = 'PA'
 cat['PA']=pd.Series(np.zeros(cat.shape[0]),cat.index)
 cat = fcn.pick_PA(cat, PA_field, box)
 
-F = open(prefix+'dsim_gal.txt','w') 
-fcn.write_dsim_header(F,prefix)
-fcn.write_galaxies_to_dsim(F, cat, sky)
+dsim_input = prefix+'_maskcat.txt'
+F = open(dsim_input,'w') 
+fcn.write_dsim_header(F,prefix,box)
 #Guide stars with preselection code = -1 
 #Had to write a function to crop first 3 digits of  the 19-digit SDSS ObjID to
 #16 digits , Dsim can only accept 16 digit objID 
@@ -103,9 +103,14 @@ F.write("7666408440660245	23:43:51.717	00:20:20.440	2000	17.99	R	-2	0	1\n")
 F.write("7666408440660226	23:43:45.391	00:21:29.428	2000	18.51	R	-2	0	1\n")
 F.write("7666408440660253	23:43:56.460	00:17:14.475	2000	19.05	R	-2	0	1\n")
 F.write("7666408440660049	23:43:56.957	00:16:38.962	2000	15.50	R	-2	0	1\n")
-
+fcn.write_galaxies_to_dsim(F, cat, sky)
 F.close()
+print 'File for inputting to dsim with the name :'
+print dsim_input
+print 'has been written.'
+
 fcn.write_slit_reg(cat,prefix,sky)
+
 
 #-----
 #example code for reading in Will 's version of the catalog

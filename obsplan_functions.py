@@ -340,8 +340,8 @@ def return_objects_in_mask_region(cat,regfile):
            {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
     return cat,box 
 
-def write_dsim_header(F,prefix):
-    F.write('#This catalog was created by obsplan.py and is intended to be used \n')
+def write_dsim_header(F,prefix,box):
+    F.write('#This catalog was created by plan*.py and is intended to be used \n')
     F.write('#as input to the deimos slitmask software following the format \n')
     F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
     F.write('#Note that the automatic generation of this file does not include\n')
@@ -472,11 +472,15 @@ def output_target_as_exclude_csv():
 
 def PAround(cat,field,PAmin,PAmax,PAvalue,maskPA):
     '''
-    Inspects each element of the PAarray and if it falls between PAmin and PAmax
+    Inspects each element of the PAarray and 
+    if it falls between PAmin and PAmax
     then it redefines the PA to the PAround value.
     Where the min and max bounds are in the masks coordinate system.
     Purpose : Determine the optimal PA for the slits
     '''
+
+
+
     maskPAmin = PAmin+maskPA
     maskPAmax = PAmax+maskPA
     if maskPAmax > 90:
@@ -499,10 +503,7 @@ def PAround(cat,field,PAmin,PAmax,PAvalue,maskPA):
         test1a = cat[field] >= maskPAmin
         test1b = cat[field] <= maskPAmax
         test = test1a*test1b
-    #PAarray[test] = PAvalue+maskPA
     cat[field][test]=PAvalue+maskPA
-    #for i in cat.index:
-    #    print cat[field][i]
     return cat
 
 def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
@@ -515,39 +516,34 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     '''
     #maskPA is the orientation of the mask
     #that complies with dsim 's definition of the angles
-    maskPA = box[0][4]-90
+    maskPA = box[0][4]+90
     if maskPA > 90:
         maskPA -= 180
     if maskPA < -90:
         maskPA += 180
 
-
+    
     ### Attempt to align the slits with the major axis of each galaxy
     ##PA = cat[:,key['deVPhi_r']]*1.0
     # Attempt to align the slits with the minor axis of each galaxy
     cat[PA_field] = cat[axis_angle]*1.0+90
 
-    #The 0-5 spec is based on DEEP2 recommendations for better sky subtraction
-    #make slits NOT to lie perpendicular to the long axis of the mask
-    #
-    #cat = PAround(cat, PA_field,90,95,95,maskPA)
-    #cat = PAround(cat, PA_field,-85,90,-85,maskPA)
-    #cat = PAround(cat, PA_field,120,180,120,maskPA)
+    #The 0-5 spec is based on DEEP2 recommendations for
+    #better sky subtraction
     cat = PAround(cat, PA_field,0,5,5,maskPA)
     cat = PAround(cat, PA_field,-5,0,-5,maskPA)
-    cat = PAround(cat, PA_field,30,90,30,maskPA)
-    
-    #last time when making the slits we had perpendicular slits
-    #and I had to change the PAround functions' inputs to 
-    cat = PAround(cat, PA_field,270,330,-30,maskPA)
 
-    #here 's the original line
-    #cat = PAround(cat, PA_field,-90,-30,-30,maskPA)
-    
+    #make slits NOT to lie perpendicular to the long axis of the mask
+    cat = PAround(cat, PA_field,30,90,30,maskPA)
+    cat = PAround(cat, PA_field,90,150,150,maskPA)
+    cat = PAround(cat, PA_field,-90,-30,-30,maskPA)
+    cat = PAround(cat, PA_field,-150,-90,-150,maskPA)
+
     if plot_diag ==True:
+        plt.ylim(-180,180)
         plt.ylabel('PA angle')
         plt.xlabel('Data index')
-        plt.plot(cat[PA_field],'x')
+        plt.plot(cat[PA_field]-maskPA,'x')
         plt.show()
     return cat
 
@@ -620,7 +616,8 @@ def write_circle_reg(cat,output_prefix):
     F.close()
 
 def write_slit_reg(cat,output_prefix,sky):
-    outputname = output_prefix+'slits.reg'
+    outputname = output_prefix+'_slits.reg'
+    print "reg file with name of:",outputname,"has been written."
     F = open(outputname,'w')
     F.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
     F.write('fk5'+'\n')
