@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import numpy.ma as ma
 import pyfits 
 import aplpy
+import pdb
 
 def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None, 
                             plot_diag=False,
@@ -397,19 +398,22 @@ def write_dsim_header(F,prefix,box):
 
 def write_galaxies_to_dsim(F, cat,  sky):
     '''
-    Stability: not tested
+    Stability: works
     INPUT:
     F = file stream of the file to write to 
     cat = dataframe object of the galaxy 
     '''
-
+    print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
+    print 'if you are not using SDSS, modify\
+    obsplan_functions.write_galaxies_to_dsim() to disable this'
+    cat['shortID'] = cat['objID']-1230000000000000000
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
     for i in cat.index:
         if cat['sign'][i]==-1:
-            F.write('{0:04d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
-                        .format(i,cat['rah'][i],
+            F.write('{0:16d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
                                 cat['ram'][i],
                                 cat['ras'][i], 
                                 cat['decd'][i],
@@ -423,8 +427,8 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
         else:
-            F.write('{0:04d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
-                        .format(i,cat['rah'][i],
+            F.write('{0:16d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
                                 cat['ram'][i],
                                 cat['ras'][i], 
                                 cat['decd'][i],
@@ -531,7 +535,6 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     # make slits to have angle between 5 and 30(-150) degrees 
     # or between -5 and -30(150) degrees 
 
-
     #The 0-5 spec is based on DEEP2 recommendations for
     #better sky subtraction
     cat = PAround(cat, PA_field,0,5,5,maskPA)
@@ -555,31 +558,36 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
         plt.show()
     return cat
 
-def exclude_objects(cat, excludeObj_file):
+def exclude_objects(cat, exclude_file):
     '''
-    Not working for dataframe catalog yet
+    
+    '''
+    col_name = ['objID','sex_ra','sex_dec','equinox','dered_r','R','weight',
+               'sample','pscode','stuff1','stuff2','stuff3']
+    exclude_cat = pd.read_csv(exclude_file,skiprows=7,delimiter=r"\s*",names=col_name)
+    print 'If you see error message for the reading in of exclude_cat'
+    print 'check if there are non-data rows in the middle of the file'
+    exclude_cat = exclude_cat.dropna()
 
-    '''
-    print 'obsplan exclusion: apply exclusion list to further filter catalog'
-    exkey = tools.readheader(exfile)
-    exlist = numpy.loadtxt(exfile,usecols=(exkey['objID'],exkey['objID']))
-    mask_ex = numpy.zeros(numpy.shape(cat)[0])
+    print 'obsplan exclude_objects: apply exclusion list to further filter catalog'
+    mask_ex = numpy.zeros(cat.shape[0])
     i = 0
-    for oid in exlist[:,0]:
+    for i in exclude_cat.index:
+        oid = int(exclude_cat['objID'][i])
         if i == 0:
-            mask_ex = cat[:,key['objID']] == oid
+            mask_ex = cat['objID']-1230000000000000000  == oid 
             i=1
         else:
-            mask_i = cat[:,key['objID']] == oid
+            mask_i = cat['objID']-1230000000000000000  == oid
             mask_tmp = mask_ex+mask_i
             mask_ex = mask_tmp > 0
-    print 'found match to exclude to have objID: ', cat[mask_ex, key['objID']]
     mask_ex = mask_ex == False
-    Nint = numpy.shape(cat)[0]
-    cat = cat[mask_ex,:]
-    Nfin = numpy.shape(cat)[0]
+    Nint = cat.shape[0]
+    cat = cat[mask_ex]
+    Nfin = cat.shape[0]
     Ncut = Nint - Nfin
-    print 'obsplan exclusion: {0} rows were removed from the catalog with {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
+    print 'obsplan exclude_objects:'
+    print '{0} rows were removed from the catalog with {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
     return cat
 
 #def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
