@@ -173,3 +173,7 @@ write_galaxies_to_dsim(F,objid[mask],ra[mask],dec[mask],mag[mask],priority_code[
 
 # Close the output dsim file
 F.close()
+
+# Create the target galaxy slit region file
+length = len1+len2
+obsplan.makeSlitmaskRegion(prefix,ra[mask],dec[mask],pa_slit[mask],length[mask],sample[mask],width=1)

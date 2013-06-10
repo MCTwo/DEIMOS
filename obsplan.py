@@ -372,3 +372,23 @@ def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectf
         else:
             F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.0f}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
                     .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit[i],len1[i],len2[i]))
+
+def makeSlitmaskRegion(prefix,ra,dec,pa_slit,length,sample,width=1):
+    '''
+    create a region file that maps the suggested slit of each galaxy
+    '''
+    outputname = prefix+'_slits.reg'
+    out = open(outputname,'w')
+    out.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
+    out.write('fk5'+'\n')
+    for i in numpy.arange(numpy.size(ra)):
+        ra_i = ra[i]
+        dec_i = dec[i]
+        length_i = length[i]
+        pa_slit_i = pa_slit[i]
+        if sample[i] == 1:
+            color = 'green'
+        else:
+            color = 'blue'
+        out.write('box({0:1.5f},{1:1.5f},{2:1.1f}",{3:1.1}",{4:0.2}) # color={4}'.format(ra_i,dec_i,width,length_i,pa_slit_i,color)+'\n')
+    out.close()
