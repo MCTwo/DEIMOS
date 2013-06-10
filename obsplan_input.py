@@ -4,6 +4,7 @@ This file provides an example of how to interact and run obsplan.py
 All position angles are defined +CCW from North towards East
 '''
 from __future__ import division
+import numpy
 import tools
 import obsplan
 
@@ -14,7 +15,7 @@ import obsplan
 ## General inputs
 
 #Prefix for all output files
-prefix = 'Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/macs1752_Mask1_rev0'
+prefix = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/macs1752_Mask1_rev0'
 # Hour angle of the target for the mask (float; unit:hours)
 HA = -40/60.
 
@@ -40,7 +41,7 @@ key = tools.readheader(catalog)
 # Size/WCS/Arcmin options, with the Size 5 by 16.1 arcmin, Angle will then
 # correspond to the slitmask's parallactic angle (i.e. +CCW from north towards
 # east) with the guider camera in the North-east quadrent at Angle=0.
-regfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/mask_revA.reg'
+regfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/mask1_rev0.reg'
 
 ## Slit size inputs
 
@@ -115,7 +116,7 @@ mask_mag = cat[:,key[mag_ttype]] <= 23
 ###########################################################################
 
 # create basic 1D arrays from catalog
-objid = cat[:,key[obid_ttype]]
+objid = cat[:,key[objid_ttype]]
 ra = cat[:,key[ra_ttype]]
 dec = cat[:,key[dec_ttype]]
 mag = cat[:,key[mag_ttype]]
@@ -124,7 +125,11 @@ mag = cat[:,key[mag_ttype]]
 mask_slitmask = obsplan.createSlitmaskMask(regfile,ra,dec)
 
 # Create the exclusion list mask
-mask_ex = obsplan.createExclusionMask(objid,exfile,exobjid_ttype)
+if exfile == None:
+    # then make a numpy.array of just True's
+    mask_ex = numpy.ones(numpy.size(objid)) == 1
+elif exfile != None and exobjid_ttype != None:
+    mask_ex = obsplan.createExclusionMask(objid,exfile,exobjid_ttype)
 
 # Determine the priority_code (i.e. weight) for each galaxy
 gal_photoz = cat[:,key[photo_z_ttype]]
@@ -149,6 +154,15 @@ pa_mask = box[4]
 pa_slit = obsplan.optimalPA(pa_mask,HA,delta)
 
 # Determine the slit size for each object
+A_gal = cat[:,key[A_gal_ttype]]
+if B_gal_ttype == None:
+    B_gal = None
+else:
+    B_gal = cat[:,key[B_gal_ttype]]
+if pa_ga_ttype == None:
+    pa_gal = None
+else:
+    pa_gal = cat[:,key[pa_ga_ttype]]
 len1, len2 = obsplan.slitsize(pa_slit,sky,A_gal,B_gal,pa_gal)
 
 # Create the output dsim file
@@ -157,7 +171,7 @@ print 'started to write out to ', outcatname
 F = open(outcatname,'w')
 
 # Write the dsim header information to the output file
-obsplan.write_dsim_header(F,regfile)
+obsplan.write_dsim_header(F,regfile,prefix)
 
 # Write the guide star info to the dsim output file
 obsplan.write_guide_stars(F,gs_ids,objid,ra,dec,mag,equinox,passband)
@@ -169,11 +183,11 @@ obsplan.write_guide_stars(F,as_ids,objid,ra,dec,mag,equinox,passband)
 mask = mask_galaxy*mask_mag*mask_ex*mask_slitmask
 
 # Write the galaxy info to the desim output file
-write_galaxies_to_dsim(F,objid[mask],ra[mask],dec[mask],mag[mask],priority_code[mask],sample[mask],selectflag[mask],pa_slit[mask],len1[mask],len2[mask],equinox='2000',passband='R')
+obsplan.write_galaxies_to_dsim(F,objid[mask],ra[mask],dec[mask],mag[mask],priority_code[mask],sample[mask],selectflag[mask],pa_slit,len1[mask],len2[mask],equinox='2000',passband='R')
 
 # Close the output dsim file
 F.close()
 
 # Create the target galaxy slit region file
 length = len1+len2
-obsplan.makeSlitmaskRegion(prefix,ra[mask],dec[mask],pa_slit[mask],length[mask],sample[mask],width=1)
+obsplan.makeSlitmaskRegion(prefix,ra[mask],dec[mask],pa_slit,length[mask],sample[mask],width=1)

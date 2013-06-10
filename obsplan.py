@@ -1,11 +1,12 @@
 from __future__ import division
 import numpy
+import tools
 import sys
 
 def readMaskRegion(regfile):
     box = numpy.fromregex(regfile,r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)",
                           [('xc',numpy.float),('yc',numpy.float),('width',numpy.float),('height',numpy.float),('angle',numpy.float)])
-    return box
+    return box[0]
 
 def createSlitmaskMask(regfile,ra,dec):
     '''
@@ -41,15 +42,8 @@ def createSlitmaskMask(regfile,ra,dec):
     mask_ramax = ra_p <= ra_p_max
     mask_decmin = dec_p >= dec_p_min
     mask_decmax = dec_p <= dec_p_max
-    mask_i = mask_ramin*mask_ramax*mask_decmin*mask_decmax
-    #combine the i mask with the previous masks
-    if i == 0:
-        mask = mask_i
-    else:
-        #if the galaxy was in any mask then it should be in the concatenated mask
-        mask_tmp = mask + mask_i
-        mask = mask_tmp > 0
-    return mask
+    mask_slitmask = mask_ramin*mask_ramax*mask_decmin*mask_decmax
+    return mask_slitmask
 
 def photoz_PriorityCode(z_cluster,gal_photoz,photo_z_err,plot_diag=False):
     '''
@@ -86,16 +80,16 @@ def assignSample(param_array,samplebounds):
     '''
     N_gal = numpy.size(param_array)
     # Make sure that samplebounds in input in pair
-    if numpy.size(samplebounds)% != 0:
+    if numpy.size(samplebounds)%2 != 0:
         print 'obsplan.assignSample: error, samplebounds must contain an lower and upper bound for each sample. An odd number of bounds detected. Exiting.'
         sys.exit()
-    N_sample = numpy.size(samplebounds)/2
+    N_sample = numpy.size(samplebounds)//2
     # if for some reason the sample bounds are not all inclusive, assign the by
     # default the next highest sample to all galaxies.
     sample = numpy.ones(N_gal)*(N_sample+1)
     # loop through each galaxy to see if it falls within a given sample bound
-    for i in N_sample:
-        for j in N_gal:
+    for i in numpy.arange(N_sample):
+        for j in numpy.arange(N_gal):
             # Check if in lowest priority sample first, then overwrite if makes
             # it in higher priority sample.
             if param_array[j] > samplebounds[2*N_sample-2-2*i] and param_array[j] < samplebounds[2*N_sample-1-2*i]:
@@ -114,8 +108,8 @@ def assignSelectionFlag(objid,psfile=None,psobjid_ttype=None):
     sflag = [1D array int] each object has value 1 if it is to be preselected in
         dsim or 0 if it is not to be preselected
     '''
-    #pscode is the preselection code, should be 0 for not being preselected
-    pscode = numpy.zeros(numpy.shape(cat)[0])    
+    #sflag is the preselection code, should be 0 for not being preselected
+    sflag = numpy.zeros(numpy.size(objid))    
 
     if psfile != None:
         #read in the preselection catalog and header
@@ -132,6 +126,8 @@ def assignSelectionFlag(objid,psfile=None,psobjid_ttype=None):
                 sflag += mask_i
                 i += 1    
         print 'obsplan: {0} slits preselected'.format(numpy.sum(sflag))
+    # Since want a list of zeros and 1's need to convert bool array
+    sflag = sflag*numpy.ones(numpy.size(sflag))
     return sflag
 
 def createExclusionMask(objid,exfile,exobjid_ttype):
@@ -198,7 +194,7 @@ def objectPA(H,delta,phi=19.82525):
 def optimalPA(pa_mask,H,delta,phi=19.82525,relPA_min=5,relPA_max=30):
     '''
     As recommended by: 
-    Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715–721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
+    Filippenko, A.V., 1982. The importance of atmospheric differential refraction in spectrophotometry. Publications of the Astronomical Society of the Pacific, 94, pp.715-721. Available at: http://adsabs.harvard.edu/abs/1982PASP...94..715F.
     
     The spectral slit should be as much aligned with the axis along the
     horizon, object and zenith. Thus the position angle of the slit (as defined 
@@ -240,6 +236,8 @@ def optimalPA(pa_mask,H,delta,phi=19.82525,relPA_min=5,relPA_max=30):
         # we do not want to redefine pa_mask since it is not really symmetric
         # due to the offcenter guider cam and other asymmetries
         pa_mask_prime = pa_mask-180
+    else:
+        pa_mask_prime = pa_mask
     
     # Determine the best allowable slit PA
     if pa_mask_prime >= pa_obj:
@@ -281,12 +279,12 @@ def slitsize(pa_slit,sky,A_gal,B_gal=None,pa_gal=None):
     elif B_gal != None and pa_gal != None:
         objrad = sqrt((A_gal*cos(pa_slit-pa_gal))**2+
                        (B_gal*sin(pa_slit-pa_gal))**2)
-    len1 = objrad.+sky[0]
-    len2 = objrad.+sky[1]
+    len1 = objrad+sky[0]
+    len2 = objrad+sky[1]
     return len1, len2
     
 
-def write_dsim_header(F,regfile):
+def write_dsim_header(F,regfile,prefix):
     '''
     F = an opened file (e.g. F=open(filename,'w')
     box = 
@@ -311,7 +309,7 @@ def write_dsim_header(F,regfile):
     F.write('#ttype12 = len2\n')
     #Write in the Slitmask information line
     F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
-            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]))
+            .format(prefix,box[0]/15.,box[1],box[4]))
 
 def write_guide_stars(F,gs_ids,objid,ra,dec,magnitude,equinox='2000',passband='R'):
     '''
@@ -327,8 +325,8 @@ def write_guide_stars(F,gs_ids,objid,ra,dec,magnitude,equinox='2000',passband='R
         mask_s = objid == i
         ra_i = tools.deg2ra(ra[mask_s],':')
         dec_i = tools.deg2dec(dec[mask_s],':')
-        mag_i = magnitude[mask_s]
-        F.write('{0}  {1}  {2}  {3:0.0f}  {4:0.2f}  {5}  -1  0  1\n'
+        mag_i = magnitude[mask_s][0]
+        F.write('{0}  {1}  {2}  {3}  {4:0.2f}  {5}  -1  0  1\n'
                 .format(i,ra_i,dec_i,equinox,mag_i,passband))    
 
 def write_align_stars(F,as_ids,objid,ra,dec,magnitude,equinox='2000',passband='R'):
@@ -340,14 +338,15 @@ def write_align_stars(F,as_ids,objid,ra,dec,magnitude,equinox='2000',passband='R
         mask_s = objid == i
         ra_i = tools.deg2ra(ra[mask_s],':')
         dec_i = tools.deg2dec(dec[mask_s],':')
-        mag_i = magnitude[mask_s]
-        F.write('{0}  {1}  {2}  {3:0.0f}  {4:0.2f}  {5}  -2  0  1\n'
+        mag_i = magnitude[mask_s][0]
+        F.write('{0}  {1}  {2}  {3}  {4:0.2f}  {5}  -2  0  1\n'
                 .format(i,ra_i,dec_i,equinox,mag_i,passband)) 
 
 def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectflag,pa_slit,len1,len2,equinox='2000',passband='R'):
     '''
     
     '''
+    from math import floor
     for i in numpy.arange(numpy.size(objid)):
         #convert deg RA to sexadec RA
         ra_i = ra[i]/15.0
@@ -366,12 +365,16 @@ def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectf
         res = (dec_i-decd)*60.
         decm = floor(res)
         decs = (res-decm)*60.
-        if sign==-1:
-            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.0f}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
-                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit[i],len1[i],len2[i]))
+        if numpy.size(pa_slit) == 1:
+            pa_slit_i = pa_slit
         else:
-            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.0f}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
-                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit[i],len1[i],len2[i]))
+            pa_slit_i = pa_slit[i]
+        if sign==-1:
+            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.2f}\t{8}\t{9:0.0f}\t{10}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
+                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
+        else:
+            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.2f}\t{8}\t{9:0.0f}\t{10}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
+                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
 
 def makeSlitmaskRegion(prefix,ra,dec,pa_slit,length,sample,width=1):
     '''
@@ -385,10 +388,13 @@ def makeSlitmaskRegion(prefix,ra,dec,pa_slit,length,sample,width=1):
         ra_i = ra[i]
         dec_i = dec[i]
         length_i = length[i]
-        pa_slit_i = pa_slit[i]
+        if numpy.size(pa_slit) == 1:
+            pa_slit_i = pa_slit
+        else:
+            pa_slit_i = pa_slit[i]        
         if sample[i] == 1:
             color = 'green'
         else:
             color = 'blue'
-        out.write('box({0:1.5f},{1:1.5f},{2:1.1f}",{3:1.1}",{4:0.2}) # color={4}'.format(ra_i,dec_i,width,length_i,pa_slit_i,color)+'\n')
+        out.write('box({0:1.5f},{1:1.5f},{2:1.1f}",{3:1.1f}",{4:0.0f}) # color={5}'.format(ra_i,dec_i,width,length_i,pa_slit_i,color)+'\n')
     out.close()
