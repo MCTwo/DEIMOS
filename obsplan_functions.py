@@ -77,7 +77,7 @@ def determine_weight(cat, x, sigma_x, mu_cl, weight_field='weight',
     if plot_diag==True:
         plt.ylabel('Weight')
         plt.xlabel('Data')
-        plt.hist(temp_cat,bins=100)
+        plt.hist(cat[weight_field],bins=100)
         plt.show()
     return cat
 
@@ -539,19 +539,31 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     #better sky subtraction
     cat = PAround(cat, PA_field,0,5,5,maskPA)
     cat = PAround(cat, PA_field,-5,0,-5,maskPA)
+    #cat = PAround(cat, PA_field,175,180,175,maskPA)
+    #cat = PAround(cat, PA_field,-180,-175,-175,maskPA)
 
     #make slits NOT to lie perpendicular to the long axis of the mask
     cat = PAround(cat, PA_field,30,90,30,maskPA)
     cat = PAround(cat, PA_field,90,150,150,maskPA)
     cat = PAround(cat, PA_field,-90,-30,-30,maskPA)
     cat = PAround(cat, PA_field,-150,-90,-150,maskPA)
+    cat = PAround(cat, PA_field,210,270,210,maskPA)
+    cat = PAround(cat, PA_field,270,330,330,maskPA)
+    cat = PAround(cat, PA_field,-210,-270,-210,maskPA)
+    cat = PAround(cat, PA_field,-270,-330,-330,maskPA)
+
 
     if plot_diag ==True:
         plt.axhline(y=5,color='r')
         plt.axhline(y=-5,color='r')
         plt.axhline(y=30,color='r')
         plt.axhline(y=-30,color='r')
-        plt.ylim(-180,180)
+        plt.axhline(y=185, color='r')
+        plt.axhline(y=175,color='r')
+        plt.axhline(y=210,color='r')
+        plt.axhline(y=150,color='r')
+
+        plt.ylim(-360,360)
         plt.ylabel('PA angle')
         plt.xlabel('Data index')
         plt.plot(cat[PA_field]-maskPA,'x')
@@ -562,6 +574,9 @@ def exclude_objects(cat, exclude_file):
     '''
     
     '''
+    #actually we can selectively import columns using pandas to make read_csv
+    #faster 
+    #i just didn't bother to figure this out
     col_name = ['objID','sex_ra','sex_dec','equinox','dered_r','R','weight',
                'sample','pscode','stuff1','stuff2','stuff3']
     exclude_cat = pd.read_csv(exclude_file,skiprows=7,delimiter=r"\s*",names=col_name)
@@ -644,6 +659,8 @@ def write_slit_reg(cat,output_prefix,sky):
         ra = cat['ra'][i]
         dec = cat['dec'][i]
         height = cat['deVRad_r'][i] +sky[0]+sky[1]
+        #there is a 90 degree discrepancy between dsim and ds9 definitions
+        #of angles
         angle = cat['PA'][i] +90
         if cat['sample'][i] == 1:
             color = 'green'

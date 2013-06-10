@@ -30,10 +30,10 @@ import pdb
 catalog = 'zwcl2341_sdsscat.csv'
 
 #this region file should represent your slitmask location 
-regfile = 'mask0_rev0.reg'
+regfile = 'mask1_rev0.reg'
 
 #name to be added to all the output files of this program
-prefix = 'stars_m0'
+prefix = 'stars_m1'
 
 
 
@@ -43,7 +43,7 @@ prefix = 'stars_m0'
 ###########################################################################
 cat = pd.read_csv(catalog,na_values='null')
 #R magnitude bounds
-R_bounds = (15,19) 
+R_bounds = (15,19.5) 
 
 
 #########################################
@@ -115,8 +115,8 @@ print 'obsplan: {0} rows were removed from the catalog with {1} initial rows, le
 #remaining for dsim input
 #------------
 cat['objID'] = cat['objID']-1230000000000000000
-for i in cat.index:
-    print '{0:19d}'.format(cat['objID'][i])
+#for i in cat.index:
+#    print '{0:19d}'.format(cat['objID'][i])
 
 #######################################################
 #create a file that writes out properties of the candidate stars
@@ -139,6 +139,13 @@ for i in cat.index:
     #You need to change the digit precision of your output line 
     output= 'F.write("'+'{0:19d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
     F.write(output)
+
+
+#-------------------------------------------------------------------------------
+#read in the reg file containing the chosen stars
+#-------------------------------------------------------------------------------
+
+
 
 
 
