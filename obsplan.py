@@ -372,33 +372,3 @@ def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectf
         else:
             F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.0f}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
                     .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit[i],len1[i],len2[i]))
-
-def write_dsim_input(objid,ra,dec,magnitude,priority_code,sample,selectflag,pa_slit,len1,len2,equinox=2000,passband='R'):
-    '''
-    '''
-    ####################################################
-    ## Create the dsimulator input file
-    ####################################################
-    
-    outcatname = prefix+'_maskcat.txt'
-    F = open(outcatname,'w')
-    F.write('#This catalog was created by obsplan.py and is intended to be used \n')
-    F.write('#as input to the deimos slitmask software following the format \n')
-    F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
-    F.write('#Note that the automatic generation of this file does not include\n')
-    F.write('#guide or alignment stars.\n')
-    F.write('#ttype1 = objid\n')
-    F.write('#ttype2 = ra\n')
-    F.write('#ttype3 = dec\n')
-    F.write('#ttype4 = equinox\n')
-    F.write('#ttype5 = magnitude\n')
-    F.write('#ttype6 = passband\n')
-    F.write('#ttype7 = priority_code\n')
-    F.write('#ttype8 = sample\n')
-    F.write('#ttype9 = selectflag\n')
-    F.write('#ttype10 = pa_slit\n')
-    F.write('#ttype11 = len1\n')
-    F.write('#ttype12 = len2\n')
-    #Write in the Slitmask information line
-    F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
-            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))
