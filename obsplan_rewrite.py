@@ -191,23 +191,38 @@ def write_dsim_header(F,regfile):
     F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
             .format(prefix,box[0][0]/15.,box[0][1],box[0][4]))
 
-#def write_guide_stars(F):
-    #mask_s = cat_s[:,key['objID']] == gs_ids
-    #ra = tools.deg2ra(cat_s[mask_s,key['ra']],':')
-    #dec = tools.deg2dec(cat_s[mask_s,key['dec']],':')
-    #mag = cat_s[mask_s,key['dered_r']][0]
-    #F.write(
-        #'{0}  {1}  {2}  2000  {3:0.2f}  r  -1  0  1\n'.format(gs_ids,ra,dec,mag))    
-#def write_align_stars(F):
-    #for i in as_ids:
-        #mask_s = cat_s[:,key['objID']] == i
-        #ra = tools.deg2ra(cat_s[mask_s,key['ra']],':')
-        #dec = tools.deg2dec(cat_s[mask_s,key['dec']],':')
-        #mag = cat_s[mask_s,key['dered_r']][0]
-        #F.write(
-            #'{0}  {1}  {2}  2000  {3:0.2f}  r  -2  0  1\n'.format(i,ra,dec,mag))    
+def write_guide_stars(F,gs_ids,objid,ra,dec,magnitude,equinox='2000',passband='R'):
+    '''
+    F = dsim file
+    gs_ids = (list of integers)
+    
+    '''
+    N = numpy.size(gs_ids)
+    # Possibly reformat radii array to enable single float input
+    if N == 1:
+        gs_ids = numpy.reshape(gs_ids,(1,))
+    for i in gs_ids:    
+        mask_s = objid == i
+        ra_i = tools.deg2ra(ra[mask_s],':')
+        dec_i = tools.deg2dec(dec[mask_s],':')
+        mag_i = magnitude[mask_s]
+        F.write('{0}  {1}  {2}  {3:0.0f}  {4:0.2f}  {5}  -1  0  1\n'
+                .format(i,ra_i,dec_i,equinox,mag_i,passband))    
 
-def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectflag,pa_slit,len1,len2,equinox=2000,passband='R'):
+def write_align_stars(F,as_ids,objid,ra,dec,magnitude,equinox='2000',passband='R'):
+    N = numpy.size(as_ids)
+    # Possibly reformat radii array to enable single float input
+    if N == 1:
+        as_ids = numpy.reshape(as_ids,(1,))
+    for i in as_ids:
+        mask_s = objid == i
+        ra_i = tools.deg2ra(ra[mask_s],':')
+        dec_i = tools.deg2dec(dec[mask_s],':')
+        mag_i = magnitude[mask_s]
+        F.write('{0}  {1}  {2}  {3:0.0f}  {4:0.2f}  {5}  -2  0  1\n'
+                .format(i,ra_i,dec_i,equinox,mag_i,passband)) 
+
+def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectflag,pa_slit,len1,len2,equinox='2000',passband='R'):
     '''
     
     '''
