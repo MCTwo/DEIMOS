@@ -50,6 +50,37 @@ def createSlitmaskMask(regfile,ra,dec):
         mask = mask_tmp > 0
     return mask
 
+def assignSample(param_array,samplebounds):
+    '''
+    Currently obsplan is only setup to break samples according to one object
+    variable (e.g. magnitude).  The sampel_param_ttype is the ttype name of the
+    vairable in the catalog to be used to make the sample division (e.g.
+    magnitude). samplebounds defines the min and max of sample_param for each
+    sample: e.g. (sample1 lowerbound, sample1 upperbound, sample2 lower bound,
+    sample2 upper bound, etc., etc.).
+    Input:
+    param_array = [1D array of floats] a 1D array containing some parameter
+        information for each target object (e.g. magnitude).
+    samplebounds = (1D list of floats with length in multiple of 2) The sample
+        bounds that define the min and max of values of param for an arbitrary
+        number of samples, e.g: (sample1 lowerbound, sample1 upperbound
+        sample2 lower bound,  sample2 upper bound, etc., etc.)
+    '''
+    N_gal = numpy.size(param_array)
+    N_sample = numpy.size(samplebounds)/2
+    # if for some reason the sample bounds are not all inclusive, assign the by
+    # default the next highest sample to all galaxies.
+    sample = numpy.ones(N_gal)*(N_sample+1)
+    # loop through each galaxy to see if it falls within a given sample bound
+    for i in N_sample:
+        for j in N_gal:
+            # Check if in lowest priority sample first, then overwrite if makes
+            # it in higher priority sample.
+            if param_array[j] > samplebounds[2*N_sample-2-2*i] and param_array[j] < samplebounds[2*N_sample-1-2*i]:
+                sample[j] = N_sample - i
+    return sample
+                
+
 def assignSelectionFlag(objid,psfile=None,psobjid_ttype=None):
     '''
     Input:
@@ -348,4 +379,4 @@ def write_dsim_input(objid,ra,dec,magnitude,priority_code,sample,selectflag,pa_s
     F.write('#ttype12 = len2\n')
     #Write in the Slitmask information line
     F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
-            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))    
+            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))

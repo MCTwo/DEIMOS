@@ -69,7 +69,18 @@ as_ids = (646957174, 646957223, 646826017, 646826203, 646957144)
 
 # ttype catalog of galaxies to exclude from mask (excludes matching ttype = objid). exobjid_ttype is ['string'] ttype name of the objid column in the exfile, the objid's should correspond to some of the objid's in the objid array
 exfile = None #a string (e.g. 'exclusion.txt') or None
-exobjid_ttype = 'objid' 
+exobjid_ttype = 'objid'
+
+## Create a sample definition
+
+# Currently obsplan is only setup to break samples according to one object
+# variable (e.g. magnitude).  The sampel_param_ttype is the ttype name of the 
+# vairable in the catalog to be used to make the sample division (e.g. 
+# magnitude). samplebounds defines the min and max of sample_param for each
+# sample: e.g. (sample1 lowerbound, sample1 upperbound, sample2 lower bound,
+# sample2 upper bound, etc., etc.).
+sample_param_ttype = 'dered_r'
+samplebounds = (0,22.5,22.5,23)
 
 ## Preselected list input
 
@@ -86,9 +97,9 @@ mask_galaxy = cat[:,key['type']] == 3
 ## Create a magnitude mask
 
 # It is likely that the a faint end mask should be used
-mask_mag = cat[:,key[mag_ttype]] <= 22.5
+mask_mag = cat[:,key[mag_ttype]] <= 23
 
-## Create a sample definition
+
 
 
 ###########################################################################
