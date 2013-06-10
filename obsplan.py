@@ -1,3 +1,5 @@
+from __future__ import division
+import numpy
 
 def readMaskRegion(regfile):
     box = numpy.fromregex(regfile,r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)",
@@ -48,16 +50,51 @@ def createSlitmaskMask(regfile,ra,dec):
         mask = mask_tmp > 0
     return mask
 
+def assignSelectionFlag(objid,psfile=None,psobjid_ttype=None):
+    '''
+    Input:
+    objid = [1D array int] object id's of the target catalog
+    psfile = ['string'] ttype catalog of objects to preselect in dsim
+    psobjid_ttype = ['string'] ttype name of the objid column in the psfile,
+        the objid's should correspond to some of the objid's in the objid array
+    Output:
+    sflag = [1D array int] each object has value 1 if it is to be preselected in
+        dsim or 0 if it is not to be preselected
+    '''
+    #pscode is the preselection code, should be 0 for not being preselected
+    pscode = numpy.zeros(numpy.shape(cat)[0])    
+
+    if psfile != None:
+        #read in the preselection catalog and header
+        pskey = tools.readheader(psfile)
+        print 'obsplan: determining preselections'
+        pslist = numpy.loadtxt(psfile,usecols=(pskey[psobjid_ttype],pskey[psobjid_ttype]))
+        i = 0
+        for oid in pslist[:,0]:
+            if i == 0:
+                sflag = objid == oid
+                i=1
+            else:
+                mask_i = objid == oid
+                sflag += mask_i
+                i += 1    
+        print 'obsplan: {0} slits preselected'.format(numpy.sum(sflag))
+    return sflag
+
 def createExclusionMask(objid,exfile,exobjid_ttype):
     '''
-    objid = [1D array int]
+    Input:
+    objid = [1D array int] object id's of the target catalog
     exfile = ['string'] ttype catalog of objects to exclude
     exobjid_ttype = ['string'] ttype name of the objid column in the exfile,
         the objid's should correspond to some of the objid's in the objid array
+    Output:
+    mask_ex = [1D boolean array] objects to be excluded with have a
+        corresponding False value
     '''
     print 'obsplan: apply exclusion list to further filter catalog'
     exkey = tools.readheader(exfile)
-    exlist = numpy.loadtxt(exfile,usecols=(exkey['exobjid_ttype'],exkey['exobjid_ttype']))
+    exlist = numpy.loadtxt(exfile,usecols=(exkey[exobjid_ttype],exkey[exobjid_ttype]))
     mask_ex = numpy.zeros(numpy.size(objid))
     i = 0
     for oid in exlist[:,0]:
