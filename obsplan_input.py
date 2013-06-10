@@ -14,13 +14,13 @@ import obsplan
 ## General inputs
 
 #Prefix for all output files
-prefix = 'Mask1_rev0'
+prefix = 'Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/macs1752_Mask1_rev0'
 # Hour angle of the target for the mask (float; unit:hours)
 HA = -40/60.
 
 ## Star and Galaxy catalog inputs
 
-catalog = 'catalog.txt'
+catalog = '/Users/dawson/SkyDrive/Research/Clusters/MACS1752/catalog/macsj1752_sdsscat_shortobjid.txt'
 objid_ttype = 'objID'
 ra_ttype = 'ra'
 dec_ttype = 'dec'
@@ -40,7 +40,7 @@ key = tools.readheader(catalog)
 # Size/WCS/Arcmin options, with the Size 5 by 16.1 arcmin, Angle will then
 # correspond to the slitmask's parallactic angle (i.e. +CCW from north towards
 # east) with the guider camera in the North-east quadrent at Angle=0.
-regfile = 'Mask1_rev0.reg'
+regfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/mask_revA.reg'
 
 ## Slit size inputs
 
@@ -61,9 +61,9 @@ pa_ga_ttype = None # if None then galaxy assumed circular
 # the object ids in the catalog
 
 # Guide star id's
-gs_ids = (440729287)
+gs_ids = (775311575)
 # Alignment star id's
-as_ids = (646957174, 646957223, 646826017, 646826203, 646957144)
+as_ids = (775311757, 775311662, 530933312, 530868425, 530868397)
 
 ## Exclusion list input
 
@@ -93,8 +93,8 @@ samplebounds = (0,22.5,22.5,23)
 ## Preselected list input
 
 # ttype catalog of galaxies to preselect in dsim.
-psfile = None #a string (e.g. 'preselect.txt') or None
-psobjid_ttype = None
+psfile = '/Users/dawson/SkyDrive/Observing/Keck2013a/MACSJ1752/preselect.txt' #a string (e.g. 'preselect.txt') or None
+psobjid_ttype = 'objID'
 
 ## Create galaxy selection mask
 
