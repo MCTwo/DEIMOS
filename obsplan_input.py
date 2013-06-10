@@ -71,6 +71,14 @@ as_ids = (646957174, 646957223, 646826017, 646826203, 646957144)
 exfile = None #a string (e.g. 'exclusion.txt') or None
 exobjid_ttype = 'objid'
 
+## Priority code (i.e. selection weight) input
+
+# Currently obsplan is only setup to calculate an objects priority code based on
+# its photo-z relative to the cluster redshift
+z_cluster = 0.366
+photo_z_ttype = 'z_phot'
+photo_z_err_ttype = 'z_phot_Err'
+
 ## Create a sample definition
 
 # Currently obsplan is only setup to break samples according to one object
@@ -119,13 +127,18 @@ mask_slitmask = obsplan.createSlitmaskMask(regfile,ra,dec)
 mask_ex = obsplan.createExclusionMask(objid,exfile,exobjid_ttype)
 
 # Determine the priority_code (i.e. weight) for each galaxy
+gal_photoz = cat[:,key[photo_z_ttype]]
+photo_z_err = cat[:,key[photo_z_err_ttype]]
+priority_code = obsplan.photoz_PriorityCode(z_cluster,gal_photoz,photo_z_err,plot_diag=False)
 
 # Determine the sample for each galaxy (sample 1 objects selected first, then
 # sample 2, etc.). This order of selection take priority over the priority_code
+param_array = cat[:,key[sample_param_ttype]]
+sample = obsplan.assignSample(param_array,samplebounds)
 
 # Determine the selection flag for each galaxy. If non-zero then the object is
 # preselected
-selectflag = assignSelectionFlag(objid,psfile,psobjid_ttype)
+selectflag = obsplan.assignSelectionFlag(objid,psfile,psobjid_ttype)
 
 # determine object declination and the mask PA from the regfile
 box = obsplan.readMaskRegion(regfile)
@@ -157,3 +170,6 @@ mask = mask_galaxy*mask_mag*mask_ex*mask_slitmask
 
 # Write the galaxy info to the desim output file
 write_galaxies_to_dsim(F,objid[mask],ra[mask],dec[mask],mag[mask],priority_code[mask],sample[mask],selectflag[mask],pa_slit[mask],len1[mask],len2[mask],equinox='2000',passband='R')
+
+# Close the output dsim file
+F.close()

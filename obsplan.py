@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy
+import sys
 
 def readMaskRegion(regfile):
     box = numpy.fromregex(regfile,r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)",
@@ -50,6 +51,23 @@ def createSlitmaskMask(regfile,ra,dec):
         mask = mask_tmp > 0
     return mask
 
+def photoz_PriorityCode(z_cluster,gal_photoz,photo_z_err,plot_diag=False):
+    '''
+    INPUT:
+    x = estimated photoz for the galaxy 
+    sigma_x = estimated error of photoz for the galaxy 
+    mu_cl = estimated z for the cluster  
+    OUTPUT:
+    weight(x=z_cl) = 1 + 100 * N(z_gal, sigma_gal, x = z_cl)
+    '''
+    wght = 1+100*numpy.exp(-(gal_photoz-z_cluster)**2/(2*photo_z_err**2))/numpy.sqrt(2*numpy.pi)/ photo_z_err
+    if plot_diag==True:
+        plt.ylabel('Weight')
+        plt.xlabel('Data')
+        plt.hist(wght,bins=100)
+        plt.show()
+    return wght
+
 def assignSample(param_array,samplebounds):
     '''
     Currently obsplan is only setup to break samples according to one object
@@ -67,6 +85,10 @@ def assignSample(param_array,samplebounds):
         sample2 lower bound,  sample2 upper bound, etc., etc.)
     '''
     N_gal = numpy.size(param_array)
+    # Make sure that samplebounds in input in pair
+    if numpy.size(samplebounds)% != 0:
+        print 'obsplan.assignSample: error, samplebounds must contain an lower and upper bound for each sample. An odd number of bounds detected. Exiting.'
+        sys.exit()
     N_sample = numpy.size(samplebounds)/2
     # if for some reason the sample bounds are not all inclusive, assign the by
     # default the next highest sample to all galaxies.
