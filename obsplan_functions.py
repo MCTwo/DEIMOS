@@ -528,6 +528,10 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     # Attempt to align the slits with the minor axis of each galaxy
     cat[PA_field] = cat[axis_angle]*1.0+90
 
+    # make slits to have angle between 5 and 30(-150) degrees 
+    # or between -5 and -30(150) degrees 
+
+
     #The 0-5 spec is based on DEEP2 recommendations for
     #better sky subtraction
     cat = PAround(cat, PA_field,0,5,5,maskPA)
@@ -540,6 +544,10 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     cat = PAround(cat, PA_field,-150,-90,-150,maskPA)
 
     if plot_diag ==True:
+        plt.axhline(y=5,color='r')
+        plt.axhline(y=-5,color='r')
+        plt.axhline(y=30,color='r')
+        plt.axhline(y=-30,color='r')
         plt.ylim(-180,180)
         plt.ylabel('PA angle')
         plt.xlabel('Data index')

@@ -77,7 +77,7 @@ cat = fcn.convert_to_sexadec_coord(cat)
 PA_field = 'PA'
 #initialize field in the catalog for storing the PA values 
 cat['PA']=pd.Series(np.zeros(cat.shape[0]),cat.index)
-cat = fcn.pick_PA(cat, PA_field, box)
+cat = fcn.pick_PA(cat, PA_field, box,plot_diag=True)
 
 dsim_input = prefix+'_maskcat.txt'
 F = open(dsim_input,'w') 
