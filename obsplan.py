@@ -168,13 +168,33 @@ def optimalPA(pa_mask,H,delta,phi=19.82525,relPA_min=5,relPA_max=30):
             pa_slit = pa_mask_prime+relPA_max
     return pa_slit
 
-def slitsize(gal_size,sky):
+def slitsize(pa_slit,sky,A_gal,B_gal=None,pa_gal=None):
     '''
     This function determines the slit size based on the size of the target and
     the requested sky on either side.  It returns desim input len1 and len2.
     
     Input:
+    pa_slit = [1D list of floats; units:degrees] the position angle of the long
+        axis of the slit, +CCW from North towards East
+    sky = [1D float list; (len1 sky, len2 sky); units:arcsec] the amount of sky
+        either side of the object size.
+    A_gal = [1D list of floats; units:arcsec] galaxy radius along its major axis
+    B_gal = [1D list of floats; units:arcsec] galaxy radius along its minor axis,
+        if None then the galaxy is assumed circular with radius A_gal
+    pa_gal = [1D list of floats; units:degrees] the position angle of the
+        galaxy's major axis +CCW from North towards East
     '''
+    from numpy import cos, sin, pi, sqrt
+    deg2rad = pi/180.
+    if B_gal == None and pa_gal == None:
+        objrad = A_gal
+    elif B_gal != None and pa_gal != None:
+        objrad = sqrt((A_gal*cos(pa_slit-pa_gal))**2+
+                       (B_gal*sin(pa_slit-pa_gal))**2)
+    len1 = objrad.+sky[0]
+    len2 = objrad.+sky[1]
+    return len1, len2
+    
 
 def write_dsim_header(F,regfile):
     '''
