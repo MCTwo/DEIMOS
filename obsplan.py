@@ -7,9 +7,13 @@ def readMaskRegion(regfile):
 def createSlitmaskMask(regfile,ra,dec):
     '''
     Input:
-    regfile 
-    ra = [1D array of floats]
-    dec = [1D array of floats]
+    regfile = [string] name of the ds9 region file. Note region should be
+        defined using Coordinate/WCS/Degrees and Size/WCS/Arcmin options, with
+        the Size 5 by 16.1 arcmin, Angle will then correspond to the slitmask's
+        parallactic angle (i.e. +CCW from north towards east) with the guider
+        camera in the North-east quadrent at Angle=0.
+    ra = [1D array of floats; units:degrees] RA of the galaxies
+    dec = [1D array of floats; units:degrees] Dec of the galaxies
     '''
     box = readMaskRegion(regfile)
     d2r = numpy.pi/180.0
