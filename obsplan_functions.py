@@ -642,10 +642,10 @@ def write_circle_reg(cat,output_prefix):
     F.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
     F.write('fk5'+'\n')
     for i in cat.index:
-        ra = cat['ra']
-        dec = cat['dec']
-        size = cat['deVRad_r']+1
-        obj = cat['objID']
+        ra = cat['ra'][i]
+        dec = cat['dec'][i]
+        size = cat['deVRad_r'][i]+1
+        obj = cat['objID'][i]
         F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") # text={{'.format(ra,dec,size)+'{0:0.0f}'.format(obj)+'}\n')
     F.close()
 
