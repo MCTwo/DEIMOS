@@ -183,7 +183,10 @@ obsplan.write_guide_stars(F,gs_ids,objid,ra,dec,mag,equinox,passband)
 obsplan.write_guide_stars(F,as_ids,objid,ra,dec,mag,equinox,passband)
 
 # Filter the galaxy catalog before creating dsim input
-mask = mask_galaxy*mask_mag*mask_ex*mask_slitmask
+mask_temp = mask_galaxy*mask_mag*mask_ex*mask_slitmask
+# but need to include any preselected galaxies that might be excluded by the
+# above masks
+mask = numpy.logical_or(mask_temp,selectflag)
 
 # Write the galaxy info to the desim output file
 obsplan.write_galaxies_to_dsim(F,objid[mask],ra[mask],dec[mask],mag[mask],priority_code[mask],sample[mask],selectflag[mask],pa_slit,len1[mask],len2[mask],equinox='2000',passband='R')
