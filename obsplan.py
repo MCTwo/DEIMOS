@@ -370,11 +370,11 @@ def write_galaxies_to_dsim(F,objid,ra,dec,magnitude,priority_code,sample,selectf
         else:
             pa_slit_i = pa_slit[i]
         if sign==-1:
-            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.2f}\t{8}\t{9:0.0f}\t{10}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
-                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
+            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
+                    .format(objid[i],rah,ram,ras,decd,decm,decs,equinox,magnitude[i],passband,priority_code[i],sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
         else:
-            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7:0.2f}\t{8}\t{9:0.0f}\t{10}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
-                    .format(objid[i],rah,ram,ras,decd,decm,decs,magnitude[i],equinox,priority_code[i],passband,sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
+            F.write('{0:0.0f}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t{7}\t{8:0.2f}\t{9}\t{10:0.0f}\t{11:0.0f}\t{12:0.0f}\t{13:0.2f}\t{14:0.1f}\t{15:0.1f}\n'
+                    .format(objid[i],rah,ram,ras,decd,decm,decs,equinox,magnitude[i],passband,priority_code[i],sample[i],selectflag[i],pa_slit_i,len1[i],len2[i]))
 
 def makeSlitmaskRegion(prefix,ra,dec,pa_slit,length,sample,width=1):
     '''
