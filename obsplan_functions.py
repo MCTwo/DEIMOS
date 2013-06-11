@@ -634,7 +634,10 @@ def exclude_objects(cat, exclude_file):
 #        F.close()
 
 def write_circle_reg(cat,output_prefix):
-    outputname = prefix+'_circles.reg'
+    '''
+    Status: work in progress
+    '''
+    outputname = output_prefix+'_circles.reg'
     F = open(outputname,'w')
     F.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
     F.write('fk5'+'\n')
