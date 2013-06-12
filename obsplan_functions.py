@@ -21,6 +21,103 @@ import pyfits
 import aplpy
 import pdb
 
+def no_density2fits(cat, prefix, rabin=50, N_boot=None):
+    #Calculate the number of bins along the column axis(=1) of the dataframe
+    ra_min = cat['ra'].min(axis=1)
+    ra_max = cat['ra'].max(axis=1)
+
+    dec_min = cat['dec'].min(axis=1)
+    dec_max = cat['dec'].max(axis=1)
+
+    rabin = 50
+    N_boot = None
+
+    #The rest of this code is adapted from the number density function 
+    dec_mean = (dec_max + dec_min) / 2 * numpy.pi / 180.0 #radians
+    # determine decbin such that the pixes are approximately square
+    decbin = rabin*(dec_max-dec_min)//((ra_max-ra_min)*numpy.cos(dec_mean))
+    # create the pixel/bin edge arrays
+    ra_binwidth = (ra_max-ra_min)/rabin
+    dec_binwidth = (dec_max-dec_min)/decbin
+    ra_edge = numpy.arange(ra_min,ra_max+ra_binwidth,ra_binwidth)
+    dec_edge = numpy.arange(dec_min,dec_max+dec_binwidth,dec_binwidth)
+    # due to possible rounding issues it is necessary to redefince decbin to
+    # match dec_edge
+    decbin = numpy.size(dec_edge)-1
+
+    # Create the blank map_array
+    if N_boot != None:
+        h = numpy.zeros((3+N_boot,decbin,rabin))
+        N = numpy.shape(cat)[0] #number of rows in filtered catalog
+        # Random with replacement bootstrap index array 
+        b = numpy.random.randint(0,high=N,size=(N,N_boot))
+        print 'numberdensity: will perform bootstrap analysis with {0} random iterations'.format(N_boot)
+            
+    ##Convert the dataframe to numpy array for the next steps
+    dec = np.array(cat['dec'])
+    ra = np.array(cat['ra'])
+            
+    #create the 2D histogram    
+    if N_boot == None:
+        h, tmp_edge1, tmp_edge2 = numpy.histogram2d(dec,ra,
+                                                 bins=(dec_edge,ra_edge))
+        plt.xlabel('DEC')
+        plt.ylabel('RA')
+        plt.imshow(h)
+        plt.colorbar()
+        plt.show()
+    else:
+        h[0,:,:], tmp_edge1, tmp_edge2 = numpy.histogram2d(cat[:,deccol],cat[:,racol],bins=(dec_edge,ra_edge))
+        for i in numpy.arange(N_boot):
+            h[3+i,:,:], tmp_edge, tmp_edge = numpy.histogram2d(cat[b[:,i],deccol],cat[b[:,i],racol],bins=(dec_edge,ra_edge))
+        #Create signal/noise and standard deviation maps
+        h[2,:,:] = numpy.std(h[3:,:,:],axis=0,ddof=1)
+        h[1,:,:] = h[0,:,:]/h[2,:,:]
+    #Create the fits file
+    H = h
+    hdu = pyfits.PrimaryHDU(numpy.float32(H))
+
+    # Calculate the wcs CR**** for the fits header    
+    xscale = (ra_max - ra_min) * numpy.cos(dec_mean) / rabin
+    yscale = (dec_max - dec_min) / decbin
+    crval1 = (ra_max - ra_min) / 2 + ra_min
+    crval2 = (dec_max - dec_min) / 2 + dec_min
+    crpix1 = rabin / 2
+    crpix2 = decbin / 2
+
+    # Apply the wcs to the fits header
+    hdu.header.update('ctype1', 'RA---TAN')
+    hdu.header.update('ctype2', 'DEC--TAN')
+    hdu.header.update('crval1', crval1)
+    hdu.header.update('crval2', crval2)
+    hdu.header.update('crpix1', crpix1)
+    hdu.header.update('crpix2', crpix2)
+    hdu.header.update('cd1_1',xscale)
+    hdu.header.update('cd1_2',0)
+    hdu.header.update('cd2_1',0)
+    hdu.header.update('cd2_2',yscale)
+    filename = prefix+'_masked_nodensity'
+    hdu.writeto(filename+'.fits',clobber=True)
+    print 'Fits file with name: ', filename, ' has been written'
+    return h, tmp_edge1, tmp_edge2
+
+def draw_contour(xbin, ybin, hist, clustername):
+    #compute bin centers: 
+    bin_xcenter = -99*np.ones(xbin.size-1)
+    bin_ycenter = -99*np.ones(xbin.size-1)
+    for i in range(xbin.size-1):
+        bin_xcenter[i] = (xbin[i] + xbin[i+1])/2.0
+    
+    bin_ycenter = -99*np.ones(ybin.size-1)
+    for i in range(ybin.size-1):
+        bin_ycenter[i] = (ybin[i] + ybin[i+1])/2.0
+
+    plt.title(clustername,fontsize='xx-large')
+    plt.clabel(contour1, inline=1, fontsize=10)
+    contour1 = plt.contour(bin_xcenter, bin_ycenter, hist)
+    plt.show()
+
+
 def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None, 
                             plot_diag=False,
                             save_diag=False, verbose=True):
@@ -76,8 +173,8 @@ def determine_weight(cat, x, sigma_x, mu_cl, weight_field='weight',
     cat[weight_field]= 1+100*np.exp(-(x-mu_cl)**2/(2*sigma_x**2))/np.sqrt(2*np.pi)/ sigma_x
     if plot_diag==True:
         plt.ylabel('Weight')
-        plt.xlabel('Data')
-        plt.hist(cat[weight_field],bins=100)
+        plt.xlabel('Photo z')
+        plt.plot(cat['z_phot'],cat[weight_field],'x')
         plt.show()
     return cat
 
@@ -646,7 +743,9 @@ def write_circle_reg(cat,output_prefix):
         dec = cat['dec'][i]
         size = cat['deVRad_r'][i]+1
         obj = cat['objID'][i]
-        F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") # text={{'.format(ra,dec,size)+'{0:0.0f}'.format(obj)+'}\n')
+        F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") # text={{'.format(ra,
+                dec,size)+'{0:0.0f}'.format(obj)+'}\n')
+    print 'obsplan_functions.write_circle_reg: file with name ',outputname,' written'
     F.close()
 
 def write_slit_reg(cat,output_prefix,sky):
