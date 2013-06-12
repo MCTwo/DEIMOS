@@ -30,7 +30,7 @@ import pdb
 catalog = 'zwcl2341_sdsscat.csv'
 
 #this region file should represent your slitmask location 
-regfile = 'mask1_rev0.reg'
+regfile = 'mask1_rev1.reg'
 
 #name to be added to all the output files of this program
 prefix = 'stars_m1'
@@ -75,7 +75,7 @@ for i in numpy.arange(numpy.shape(box)[0]):
     # make the box wider to mimic the area of the guide camera 
     # somehow the variables for the width and height are flipped  
     w = box[i][2]
-    h = box[i][3]*1.5 
+    h = box[i][3]*1.7 
     phi=box[i][4]*d2r
     #rotate the galaxies into the "primed" (p) region coorditate frame centered
     #at the center of the region
@@ -137,7 +137,7 @@ for i in cat.index:
     #rmag = cat[i,key['dered_r']]
     #!!!!Warning!!!! if your OBJID is longer than 19 digit 
     #You need to change the digit precision of your output line 
-    output= 'F.write("'+'{0:19d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
+    output= 'F.write("'+'{0:16d}\t'.format(obj)+ra+'\t'+dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'][i])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
     F.write(output)
 
 

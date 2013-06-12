@@ -668,7 +668,7 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
 
 def exclude_objects(cat, exclude_file):
     '''
-    
+   works 
     '''
     #actually we can selectively import columns using pandas to make read_csv
     #faster 
@@ -729,9 +729,9 @@ def exclude_objects(cat, exclude_file):
 #    if prefix !=None: 
 #        F.close()
 
-def write_circle_reg(cat,output_prefix):
+#def write_circle_reg(cat,output_prefix):
     '''
-    Status: works
+    Status: debugging
     Future features: more control over the size of the circle
     Combine this with slit writing and allow users to specify what type of 
     region to draw
@@ -740,13 +740,26 @@ def write_circle_reg(cat,output_prefix):
     F = open(outputname,'w')
     F.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
     F.write('fk5'+'\n')
+    i=cat.index[0]
     for i in cat.index:
         ra = cat['ra'][i]
         dec = cat['dec'][i]
-        size = cat['deVRad_r'][i]*300
+        size = cat['deVRad_r'][i]
+        #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+        #You need to change the digit precision of your output line 
         obj = cat['objID'][i]
-        F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") # text={{'.format(ra,
-                dec,size)+'{0:19d}'.format(obj)+'}\n')
+        R = cat['dered_r'][i]
+        type = cat['type'][i]
+        ###!!!!Warning!!!! if your OBJID is longer than 19 digit 
+        ###You need to change the digit precision of your output line 
+        F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size)+'{0:19d}--{1:1.2f}'.format(obj,R)+'}\n')
+    #    ra = cat['ra'][i]
+    #    dec = cat['dec'][i]
+    #    size = cat['deVRad_r'][i]#+10 #cat['deVRad_r'][i]*8000
+    #    obj = cat['objID'][i] 
+    #    #R = cat['dered_r'][i]
+    #    F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}")#text={{'.format(ra,dec,size))#+'{0:19d}'.format(obj)+'}\n')
+        #F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") #text={{'.format(ra,dec,size)+'{0:20d}--{1:1.2f}'.format(objID,R)+'}\n')
     print 'obsplan_functions.write_circle_reg: file with name ',outputname,' written'
     F.close()
 
@@ -770,7 +783,7 @@ def write_slit_reg(cat,output_prefix,sky):
             color = 'green'
         else:
             color = 'blue'
-        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) # color={4}'.format(ra,dec,height,angle,color)+'\n')
-       
+#        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) # color={4}'.format(ra,dec,height,angle,color)+'\n')
+        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
     F.close()
 
