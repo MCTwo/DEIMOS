@@ -117,7 +117,6 @@ def draw_contour(xbin, ybin, hist, clustername):
     contour1 = plt.contour(bin_xcenter, bin_ycenter, hist)
     plt.show()
 
-
 def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None, 
                             plot_diag=False,
                             save_diag=False, verbose=True):
@@ -732,7 +731,10 @@ def exclude_objects(cat, exclude_file):
 
 def write_circle_reg(cat,output_prefix):
     '''
-    Status: work in progress
+    Status: works
+    Future features: more control over the size of the circle
+    Combine this with slit writing and allow users to specify what type of 
+    region to draw
     '''
     outputname = output_prefix+'_circles.reg'
     F = open(outputname,'w')
@@ -741,10 +743,10 @@ def write_circle_reg(cat,output_prefix):
     for i in cat.index:
         ra = cat['ra'][i]
         dec = cat['dec'][i]
-        size = cat['deVRad_r'][i]+1
+        size = cat['deVRad_r'][i]*300
         obj = cat['objID'][i]
         F.write('circle({0:1.5f},{1:1.5f},{2:1.1f}") # text={{'.format(ra,
-                dec,size)+'{0:0.0f}'.format(obj)+'}\n')
+                dec,size)+'{0:19d}'.format(obj)+'}\n')
     print 'obsplan_functions.write_circle_reg: file with name ',outputname,' written'
     F.close()
 
