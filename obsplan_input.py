@@ -180,7 +180,7 @@ obsplan.write_dsim_header(F,regfile,prefix)
 obsplan.write_guide_stars(F,gs_ids,objid,ra,dec,mag,equinox,passband)
 
 # Write the alignment star info to the dsim output file
-obsplan.write_guide_stars(F,as_ids,objid,ra,dec,mag,equinox,passband)
+obsplan.write_align_stars(F,as_ids,objid,ra,dec,mag,equinox,passband)
 
 # Filter the galaxy catalog before creating dsim input
 mask_temp = mask_galaxy*mask_mag*mask_ex*mask_slitmask
