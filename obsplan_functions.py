@@ -502,13 +502,13 @@ def write_galaxies_to_dsim(F, cat,  sky):
     print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
     print 'if you are not using SDSS, modify\
     obsplan_functions.write_galaxies_to_dsim() to disable this'
-    cat['shortID'] = cat['objID']-1230000000000000000
+    cat['shortID'] = cat['objID']-1237660000000000000
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
     for i in cat.index:
         if cat['sign'][i]==-1:
-            F.write('{0:16d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
                         .format(cat['shortID'][i],cat['rah'][i],
                                 cat['ram'][i],
                                 cat['ras'][i], 
@@ -518,12 +518,12 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['dered_r'][i],
                                 cat['weight'][i],
                                 cat['sample'][i],
-                                cat['pscode'][i]*1.,
+                                cat['pscode'][i],
                                 cat['PA'][i],
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
         else:
-            F.write('{0:16d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
                         .format(cat['shortID'][i],cat['rah'][i],
                                 cat['ram'][i],
                                 cat['ras'][i], 
@@ -533,7 +533,7 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['dered_r'][i],
                                 cat['weight'][i],
                                 cat['sample'][i],
-                                cat['pscode'][i]*1,
+                                cat['pscode'][i],
                                 cat['PA'][i],
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
@@ -686,10 +686,10 @@ def exclude_objects(cat, exclude_file):
     for i in exclude_cat.index:
         oid = int(exclude_cat['objID'][i])
         if i == 0:
-            mask_ex = cat['objID']-1230000000000000000  == oid 
+            mask_ex = cat['objID']-1237660000000000000  == oid 
             i=1
         else:
-            mask_i = cat['objID']-1230000000000000000  == oid
+            mask_i = cat['objID']-1237660000000000000  == oid
             mask_tmp = mask_ex+mask_i
             mask_ex = mask_tmp > 0
     mask_ex = mask_ex == False
@@ -729,7 +729,7 @@ def exclude_objects(cat, exclude_file):
 #    if prefix !=None: 
 #        F.close()
 
-#def write_circle_reg(cat,output_prefix):
+def write_circle_reg(cat,output_prefix):
     '''
     Status: debugging
     Future features: more control over the size of the circle
@@ -763,7 +763,7 @@ def exclude_objects(cat, exclude_file):
     print 'obsplan_functions.write_circle_reg: file with name ',outputname,' written'
     F.close()
 
-def write_slit_reg(cat,output_prefix,sky):
+def write_slit_reg(cat,output_prefix,sky,color1='green',color2='blue'):
     outputname = output_prefix+'_slits.reg'
     print "reg file with name of:",outputname,"has been written."
     F = open(outputname,'w')
@@ -780,9 +780,9 @@ def write_slit_reg(cat,output_prefix,sky):
         #of angles
         angle = cat['PA'][i] +90
         if cat['sample'][i] == 1:
-            color = 'green'
+            color = color1
         else:
-            color = 'blue'
+            color = color2
 #        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) # color={4}'.format(ra,dec,height,angle,color)+'\n')
         F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
     F.close()
