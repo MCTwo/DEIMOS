@@ -59,13 +59,14 @@ def no_density2fits(cat, prefix, rabin=50, N_boot=None):
             
     #create the 2D histogram    
     if N_boot == None:
-        h, tmp_edge1, tmp_edge2 = numpy.histogram2d(dec,ra,
-                                                 bins=(dec_edge,ra_edge))
-        plt.xlabel('DEC')
-        plt.ylabel('RA')
-        plt.imshow(h)
-        plt.colorbar()
-        plt.show()
+        h, edge1, edge2 = numpy.histogram2d(dec,ra,
+                            bins=(dec_edge,ra_edge))
+        
+        #plt.xlabel('DEC')
+        #plt.ylabel('RA')
+        #plt.imshow(h)
+        #plt.colorbar()
+        #plt.show()
     else:
         h[0,:,:], tmp_edge1, tmp_edge2 = numpy.histogram2d(cat[:,deccol],cat[:,racol],bins=(dec_edge,ra_edge))
         for i in numpy.arange(N_boot):
@@ -99,14 +100,20 @@ def no_density2fits(cat, prefix, rabin=50, N_boot=None):
     filename = prefix+'_masked_nodensity'
     hdu.writeto(filename+'.fits',clobber=True)
     print 'Fits file with name: ', filename, ' has been written'
-    return h, tmp_edge1, tmp_edge2
+    return h, edge1, edge2
 
 def draw_contour(xbin, ybin, hist, clustername):
     #compute bin centers: 
-    bin_xcenter = -99*np.ones(xbin.size-1)
-    bin_ycenter = -99*np.ones(xbin.size-1)
+    bin_xcenter = -99.*np.ones(xbin.size-1)
+    bin_ycenter = -99.*np.ones(xbin.size-1)
     for i in range(xbin.size-1):
-        bin_xcenter[i] = (xbin[i] + xbin[i+1])/2.0
+        #bin_xcenter[i] = (xbin[i] + xbin[i+1])/2.0
+        print type(bin_xcenter[i])
+        a = xbin[i]
+        b = xbin[i+1]
+        print type(a), ' and ', type(b)
+        print type( (a+b)/2.0)
+#        print type((xbin[i] + xbin[i+1])/2.0)
     
     bin_ycenter = -99*np.ones(ybin.size-1)
     for i in range(ybin.size-1):
@@ -114,6 +121,7 @@ def draw_contour(xbin, ybin, hist, clustername):
 
     plt.title(clustername,fontsize='xx-large')
     plt.clabel(contour1, inline=1, fontsize=10)
+    pdb.set_trace()
     contour1 = plt.contour(bin_xcenter, bin_ycenter, hist)
     plt.show()
 

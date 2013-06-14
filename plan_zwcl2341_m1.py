@@ -25,11 +25,11 @@ import pdb
 #-------------------------------------------------------------------------------
 catalog = 'zwcl2341_sdsscat.csv'
 maskNumber = 1 #2 
-prefix = 'zwcl2341_rev0_m1'
+prefix = 'zwcl2341_rev1_m1'
 regfile = 'mask1_rev1.reg'
 R_bounds = (0,23.5)
 #the amount of sky on either side of galaxy to include in slit (arcsec)
-sky = (1.0, 1.0) 
+sky = (1.5, 1.5) 
 #the known redshift for cluster ZwCL 2341 is 
 z_cluster = 0.27
 exclude_file = 'exclude_m0.txt'
