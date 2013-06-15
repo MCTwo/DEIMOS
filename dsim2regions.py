@@ -1,16 +1,8 @@
-#-------------------------------------------------------------------------------
-#Author: David Wittman
-#Purpose: Converts output from dsim to ds9 region files
-#-------------------------------------------------------------------------------
-
 #!/usr/bin/python
 
 import pyfits
 import sys
 import numpy
-
-#open output file
-
 
 # following dsim2regions.pro conventions
 color = {'A':'blue','P':'green','G':'yellow'}
