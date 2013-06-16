@@ -5,7 +5,7 @@ import sys
 import numpy
 
 # following dsim2regions.pro conventions
-color = {'A':'blue','P':'green','G':'yellow'}
+color = {'A':'blue','P':'cyan','G':'yellow'}
 tvpolygonx = numpy.array([-1.0,208.0,208.0,-1.0,-1.0,-1.0,208.0])
 tvpolygony = numpy.array([ 298.4,302.7,94.0,94.0,298.4,174.0,174.0])
 maskpolygonx = numpy.array([-498.0,-498.0,360.0,420.0,460.0,498.0,498.0,-498.0,-498.0,-460.0,-420.0,-360.0,259.7,259.7,259.7,249.3,249.3,5.2,5.2,-5.2,-5.2,-249.3,-249.3,-259.7,-259.7])

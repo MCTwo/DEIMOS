@@ -25,7 +25,7 @@ import pdb
 #-------------------------------------------------------------------------------
 catalog = 'zwcl2341_sdsscat.csv'
 maskNumber = 1 #2 
-prefix = 'zwcl2341_rev2_m1'
+prefix = 'zwcl2341_rev3_m1'
 regfile = 'mask1_rev2.reg'
 R_bounds = (0,23.5)
 #the amount of sky on either side of galaxy to include in slit (arcsec)
