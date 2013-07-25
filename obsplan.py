@@ -323,6 +323,9 @@ def write_guide_stars(F,gs_ids,objid,ra,dec,magnitude,equinox='2000',passband='R
         gs_ids = numpy.reshape(gs_ids,(1,))
     for i in gs_ids:    
         mask_s = objid == i
+        if numpy.sum(mask_s) ==0:
+            print 'obsplan.write_guide_stars: no objects in catalog match the guide star id:{0}, please check your input, exiting'.format(i)
+            sys.exit()
         ra_i = tools.deg2ra(ra[mask_s],':')
         dec_i = tools.deg2dec(dec[mask_s],':')
         mag_i = magnitude[mask_s][0]
@@ -336,6 +339,9 @@ def write_align_stars(F,as_ids,objid,ra,dec,magnitude,equinox='2000',passband='R
         as_ids = numpy.reshape(as_ids,(1,))
     for i in as_ids:
         mask_s = objid == i
+        if numpy.sum(mask_s) ==0:
+            print 'obsplan.write_align_stars: no objects in catalog match the alignment star id:{0}, please check your input, exiting'.format(i)
+            sys.exit()        
         ra_i = tools.deg2ra(ra[mask_s],':')
         dec_i = tools.deg2dec(dec[mask_s],':')
         mag_i = magnitude[mask_s][0]
