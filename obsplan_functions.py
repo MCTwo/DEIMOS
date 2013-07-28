@@ -21,7 +21,66 @@ import pyfits
 import aplpy
 import pdb
 
+#----Miscallaneous tools----------------------------------------------- 
+def convert_to_sexadec_coord(cat,ra_field='ra',dec_field='dec',
+                            dec_sign_field='sign',out_rah_field='rah',
+                             out_ram_field='ram', out_ras_field='ras',
+                             out_decd_field='decd', out_decm_field='decm',
+                             out_decs_field='decs'):
+    '''
+    INPUT: 
+    cat = dataframe catalog object 
+    ra_field = string denoting the ra field name
+    dec_field = string denoting the dec field name
+    similar with the 
+    out_*_field = string denoting the converted * field name 
+
+    OUTPUT:
+    cat = dataframe but with several more fields 
+    the wildcard * denotes the following:
+    * 'rah' degrees of ra
+    * 'ram' minutes of ra 
+    * 'ras' seconds of ra 
+    * 'decd' degrees of dec
+    * 'decm' minutes of dec 
+    * 'decs' seconds of dec 
+    * 'sign' sign of dec    
+    '''
+    #convert deg RA to sexadec RA
+    # I should have used deg2ra instead 
+    # I should have used deg2dec
+    # but then I also have to change write_galaxies 
+    ra = cat[ra_field]/15.0
+    cat[out_rah_field] = np.floor(ra)
+    res = (ra-cat[out_rah_field])*60.
+    cat[out_ram_field] = np.floor(res)
+    cat[out_ras_field] = (res-cat[out_ram_field])*60.
+
+    #convert deg dec to sexadec dec
+    dec = cat[dec_field]
+    #initialize a field for storing the sign of dec
+    cat[dec_sign_field] = cat[dec_field]
+
+    for i in cat.index:
+        if cat[dec_field][i]<0:
+            cat[dec_sign_field][i]= -1.
+            dec = abs(dec)
+        else:
+            cat[dec_sign_field][i] = 1.
+    cat[out_decd_field] = np.floor(dec)
+    res = (dec-cat[out_decd_field])*60.
+    cat[out_decm_field] = np.floor(res)
+    cat[out_decs_field] = (res-cat[out_decm_field])*60.
+    return cat
+
+#----Diagnostic functions----------------------------------------------
+
 def no_density2fits(cat, prefix, rabin=50, N_boot=None):
+    '''
+    writes number density to fits
+    Input: cat in dataframe format
+    prefix: prefix for the name of the file 
+    '''
     #Calculate the number of bins along the column axis(=1) of the dataframe
     ra_min = cat['ra'].min(axis=1)
     ra_max = cat['ra'].max(axis=1)
@@ -103,6 +162,16 @@ def no_density2fits(cat, prefix, rabin=50, N_boot=None):
     return h, edge1, edge2
 
 def draw_contour(xbin, ybin, hist, clustername):
+    '''
+    Purpose: draw contour based on histogram
+    used together with no_density2fits or plt.hist
+    to get the bin edges as input of this function
+    Input:
+    xbin = xbin edge 
+    ybin = ybin edge 
+    hist = histogram object returned from
+            matplotlib.pyplot.hist
+    '''
     #compute bin centers: 
     bin_xcenter = -99.*np.ones(xbin.size-1)
     bin_ycenter = -99.*np.ones(xbin.size-1)
@@ -124,6 +193,100 @@ def draw_contour(xbin, ybin, hist, clustername):
     pdb.set_trace()
     contour1 = plt.contour(bin_xcenter, bin_ycenter, hist)
     plt.show()
+
+def plot_gal_histogram_as_fits(cat, prefix, rabin=50,
+                               rarange=None, decrange=None, zrange=None,
+                               N_boot = None, plot_hist=False,
+                               plot_contour=False):
+    '''
+    purpose: plot galaxy number density as fits
+    cat = catalog as dataframe 
+    prefix = prefix for the name of the fits file 
+    rabin = number of histogram bins along ra 
+    rarange = not quite sure
+    decrange = not quite sure  
+    zrange = not quite sure 
+    N_boot = number of bootsetrap 
+    plot_hist = bool , if True, plot histogram to screen 
+    plot_contour = bool, if True, plot contour to screen
+    '''
+    ra_min = cat['ra'].min(axis=1)
+    ra_max = cat['ra'].max(axis=1)
+
+    dec_min = cat['dec'].min(axis=1)
+    dec_max = cat['dec'].max(axis=1)
+
+    #The rest of this code is adapted from the number density function 
+    dec_mean = (dec_max + dec_min) / 2 * numpy.pi / 180.0 #radians
+    # determine decbin such that the pixes are approximately square
+    decbin = rabin*(dec_max-dec_min)//((ra_max-ra_min)*numpy.cos(dec_mean))
+    # create the pixel/bin edge arrays
+    ra_binwidth = (ra_max-ra_min)/rabin
+    dec_binwidth = (dec_max-dec_min)/decbin
+    ra_edge = numpy.arange(ra_min,ra_max+ra_binwidth,ra_binwidth)
+    dec_edge = numpy.arange(dec_min,dec_max+dec_binwidth,dec_binwidth)
+    # due to possible rounding issues it is necessary to 
+    # redefine decbin to
+    # match dec_edge
+    decbin = numpy.size(dec_edge)-1
+
+    # Create the blank map_array
+    if N_boot != None:
+        h = numpy.zeros((3+N_boot,decbin,rabin))
+        N = numpy.shape(cat)[0] #number of rows in filtered catalog
+        # Random with replacement bootstrap index array 
+        b = numpy.random.randint(0,high=N,size=(N,N_boot))
+        print 'numberdensity: will perform bootstrap analysis with {0} random iterations'.format(N_boot)
+            
+    ##Convert the dataframe to numpy array for the next steps
+    dec = np.array(cat['dec'])
+    ra = np.array(cat['ra'])
+            
+    #create the 2D histogram    
+    if N_boot == None:
+        h, tmp_edge1, tmp_edge2 = numpy.histogram2d(dec,ra,
+                                                 bins=(dec_edge,ra_edge))
+        plt.xlabel('DEC')
+        plt.ylabel('RA')
+        plt.imshow(h)
+        plt.colorbar()
+        if plot_hist==True:
+            plt.title('Not perfect hist, DEC & RA might have flipped')
+            plt.show()
+    else:
+        h[0,:,:], tmp_edge1, tmp_edge2 = numpy.histogram2d(cat[:,deccol],cat[:,racol],bins=(dec_edge,ra_edge))
+        for i in numpy.arange(N_boot):
+            h[3+i,:,:], tmp_edge, tmp_edge = numpy.histogram2d(cat[b[:,i],deccol],cat[b[:,i],racol],bins=(dec_edge,ra_edge))
+        #Create signal/noise and standard deviation maps
+        h[2,:,:] = numpy.std(h[3:,:,:],axis=0,ddof=1)
+        h[1,:,:] = h[0,:,:]/h[2,:,:]
+    #Create the fits file
+    H = h
+    hdu = pyfits.PrimaryHDU(numpy.float32(H))
+
+    # Calculate the wcs CR**** for the fits header    
+    xscale = (ra_max - ra_min) * numpy.cos(dec_mean) / rabin
+    yscale = (dec_max - dec_min) / decbin
+    crval1 = (ra_max - ra_min) / 2 + ra_min
+    crval2 = (dec_max - dec_min) / 2 + dec_min
+    crpix1 = rabin / 2
+    crpix2 = decbin / 2
+
+    # Apply the wcs to the fits header
+    hdu.header.update('ctype1', 'RA---TAN')
+    hdu.header.update('ctype2', 'DEC--TAN')
+    hdu.header.update('crval1', crval1)
+    hdu.header.update('crval2', crval2)
+    hdu.header.update('crpix1', crpix1)
+    hdu.header.update('crpix2', crpix2)
+    hdu.header.update('cd1_1',xscale)
+    hdu.header.update('cd1_2',0)
+    hdu.header.update('cd2_1',0)
+    hdu.header.update('cd2_2',yscale)
+    filename = prefix+'_masked_nodensity'
+    hdu.writeto(filename+'.fits',clobber=True) 
+
+#----functions for Filtering/ target selecting/ determing parameters----
 
 def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None, 
                             plot_diag=False,
@@ -160,9 +323,10 @@ def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None,
         plt.show()
         if save_diag==True:
             plt.save('diagnose_filter_'+field+'.png')
-    print 'Filtering according to '+field
-    print 'Started out with %d\n filtered out %d data entries\n with %d remaining'%\
-            (dataNo,dataNo-cat.shape[0],cat.shape[0])
+        print 'Filtering according to '+field+':'
+    print 'Started out with {0}\n filtered out '.format(dataNo)+\
+        '{0} data entries\n with {1}'.format(dataNo-cat.shape[0],cat.shape[0])+\
+            ' remaining'
 
     return cat 
 
@@ -177,10 +341,13 @@ def determine_weight(cat, x, sigma_x, mu_cl, weight_field='weight',
     OUTPUT:
     weight(x=z_cl) = 1 + 100 * N(z_gal, sigma_gal, x = z_cl)
     '''
-    cat[weight_field]= 1+100*np.exp(-(x-mu_cl)**2/(2*sigma_x**2))/np.sqrt(2*np.pi)/ sigma_x
+    cat[weight_field]= 1.+100*np.exp(-(x-mu_cl)**2/(2*sigma_x**2))/\
+                        np.sqrt(2*np.pi)/ sigma_x
     if plot_diag==True:
         plt.ylabel('Weight')
         plt.xlabel('Photo z')
+        plt.title('Cluster redshift at z='+str(mu_cl))
+        plt.axvline(mu_cl,color='r')
         plt.plot(cat['z_phot'],cat[weight_field],'x')
         plt.show()
     return cat
@@ -241,342 +408,6 @@ def determine_sample_no(cat, sample_no, field, first_sample = False,
             plt.savefig('sample_vs_'+field+'_cut.png')
 
     return cat 
-
-def plot_gal_histogram_as_fits(cat, prefix, rabin=50,
-                               rarange=None, decrange=None, zrange=None,
-                               N_boot = None, plot_hist=False,
-                               plot_contour=False):
-    
-    ra_min = cat['ra'].min(axis=1)
-    ra_max = cat['ra'].max(axis=1)
-
-    dec_min = cat['dec'].min(axis=1)
-    dec_max = cat['dec'].max(axis=1)
-
-
-
-    #The rest of this code is adapted from the number density function 
-    dec_mean = (dec_max + dec_min) / 2 * numpy.pi / 180.0 #radians
-    # determine decbin such that the pixes are approximately square
-    decbin = rabin*(dec_max-dec_min)//((ra_max-ra_min)*numpy.cos(dec_mean))
-    # create the pixel/bin edge arrays
-    ra_binwidth = (ra_max-ra_min)/rabin
-    dec_binwidth = (dec_max-dec_min)/decbin
-    ra_edge = numpy.arange(ra_min,ra_max+ra_binwidth,ra_binwidth)
-    dec_edge = numpy.arange(dec_min,dec_max+dec_binwidth,dec_binwidth)
-    # due to possible rounding issues it is necessary to redefince decbin to
-    # match dec_edge
-    decbin = numpy.size(dec_edge)-1
-
-    # Create the blank map_array
-    if N_boot != None:
-        h = numpy.zeros((3+N_boot,decbin,rabin))
-        N = numpy.shape(cat)[0] #number of rows in filtered catalog
-        # Random with replacement bootstrap index array 
-        b = numpy.random.randint(0,high=N,size=(N,N_boot))
-        print 'numberdensity: will perform bootstrap analysis with {0} random iterations'.format(N_boot)
-            
-    ##Convert the dataframe to numpy array for the next steps
-    dec = np.array(cat['dec'])
-    ra = np.array(cat['ra'])
-            
-    #create the 2D histogram    
-    if N_boot == None:
-        h, tmp_edge1, tmp_edge2 = numpy.histogram2d(dec,ra,
-                                                 bins=(dec_edge,ra_edge))
-        plt.xlabel('DEC')
-        plt.ylabel('RA')
-        plt.imshow(h)
-        plt.colorbar()
-        if plot_hist==True:
-            plt.title('Not perfect hist, DEC & RA might have flipped')
-            plt.show()
-    else:
-        h[0,:,:], tmp_edge1, tmp_edge2 = numpy.histogram2d(cat[:,deccol],cat[:,racol],bins=(dec_edge,ra_edge))
-        for i in numpy.arange(N_boot):
-            h[3+i,:,:], tmp_edge, tmp_edge = numpy.histogram2d(cat[b[:,i],deccol],cat[b[:,i],racol],bins=(dec_edge,ra_edge))
-        #Create signal/noise and standard deviation maps
-        h[2,:,:] = numpy.std(h[3:,:,:],axis=0,ddof=1)
-        h[1,:,:] = h[0,:,:]/h[2,:,:]
-    #Create the fits file
-    H = h
-    hdu = pyfits.PrimaryHDU(numpy.float32(H))
-
-    # Calculate the wcs CR**** for the fits header    
-    xscale = (ra_max - ra_min) * numpy.cos(dec_mean) / rabin
-    yscale = (dec_max - dec_min) / decbin
-    crval1 = (ra_max - ra_min) / 2 + ra_min
-    crval2 = (dec_max - dec_min) / 2 + dec_min
-    crpix1 = rabin / 2
-    crpix2 = decbin / 2
-
-    # Apply the wcs to the fits header
-    hdu.header.update('ctype1', 'RA---TAN')
-    hdu.header.update('ctype2', 'DEC--TAN')
-    hdu.header.update('crval1', crval1)
-    hdu.header.update('crval2', crval2)
-    hdu.header.update('crpix1', crpix1)
-    hdu.header.update('crpix2', crpix2)
-    hdu.header.update('cd1_1',xscale)
-    hdu.header.update('cd1_2',0)
-    hdu.header.update('cd2_1',0)
-    hdu.header.update('cd2_2',yscale)
-    filename = prefix+'_masked_nodensity'
-    hdu.writeto(filename+'.fits',clobber=True) 
-
-def convert_to_sexadec_coord(cat,ra_field='ra',dec_field='dec',
-                            dec_sign_field='sign',out_rah_field='rah',
-                             out_ram_field='ram', out_ras_field='ras',
-                             out_decd_field='decd', out_decm_field='decm',
-                             out_decs_field='decs'):
-    '''
-    INPUT: 
-    cat = dataframe catalog object 
-    ra_field = string denoting the ra field name
-    dec_field = string denoting the dec field name
-    similar with the 
-    out_*_field = string denoting the converted * field name 
-
-    OUTPUT:
-    cat = dataframe but with several more fields 
-    the wildcard * denotes the following:
-    * 'rah' degrees of ra
-    * 'ram' minutes of ra 
-    * 'ras' seconds of ra 
-    * 'decd' degrees of dec
-    * 'decm' minutes of dec 
-    * 'decs' seconds of dec 
-    * 'sign' sign of dec    
-    '''
-    #convert deg RA to sexadec RA
-    # I should have used deg2ra instead 
-    # I should have used deg2dec
-    # but then I also have to change write_galaxies 
-    ra = cat[ra_field]/15.0
-    cat[out_rah_field] = np.floor(ra)
-    res = (ra-cat[out_rah_field])*60.
-    cat[out_ram_field] = np.floor(res)
-    cat[out_ras_field] = (res-cat[out_ram_field])*60.
-
-    #convert deg dec to sexadec dec
-    dec = cat[dec_field]
-    #initialize a field for storing the sign of dec
-    cat[dec_sign_field] = cat[dec_field]
-
-    for i in cat.index:
-        if cat[dec_field][i]<0:
-            cat[dec_sign_field][i]= -1.
-            dec = abs(dec)
-        else:
-            cat[dec_sign_field][i] = 1.
-    cat[out_decd_field] = np.floor(dec)
-    res = (dec-cat[out_decd_field])*60.
-    cat[out_decm_field] = np.floor(res)
-    cat[out_decs_field] = (res-cat[out_decm_field])*60.
-    return cat
-
-def return_objects_in_mask_region(cat,regfile):
-    '''
-    INPUT:
-    cat = dataframe catalog object 
-    
-    regfile = 
-    mask file generated from ds9 see warning statement below about 
-    how this mask file should be created 
-
-    OUTPUT:
-    cat = dataframe with only the objects in the box region 
-    box = info specifying how the mask is oriented 
-    
-    '''
-    box = numpy.fromregex(regfile,
-        r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)",
-        [('xc',numpy.float),('yc',numpy.float),('width',numpy.float),
-        ('height',numpy.float),('angle',numpy.float)])
-
-    if len(box) == 0: 
-        print 'WARNING!!!!! \
-               When saving your reg file,choose fk5 > WCS > degrees\n \
-               in the popup menu there is something wrong with your\n \
-               box region file format~!\n \
-               You have put a regfile with wrong coordinate format'
-
-    d2r = numpy.pi/180.0
-    #loop through the regions creating masks for galaxy inclusion
-    for i in numpy.arange(numpy.shape(box)[0]):
-        #phi is the ccw angle from the +East axis
-        xc = box[i][0]
-        yc = box[i][1]
-        w = box[i][2]
-        h = box[i][3]
-        phi=box[i][4]*d2r
-        #rotate the galaxies into the "primed" (p) region coorditate frame centered
-        #at the center of the region
-        ra_p = (np.array(cat['ra'])-xc)*numpy.cos(yc*d2r)*numpy.cos(-phi)+(np.array(cat['dec'])-yc)*numpy.sin(-phi)
-        dec_p = -(np.array(cat['ra'])-xc)*numpy.cos(yc*d2r)*numpy.sin(-phi)+(cat['dec']-yc)*numpy.cos(-phi)
-        #determine the min and max bounds of the region
-        # min = (box center [deg])-((box height [sec])/(2*60**2))
-        ra_p_min = -w/(2*60**2)
-        ra_p_max = w/(2*60**2)
-        dec_p_min = -h/(2*60**2)
-        dec_p_max = h/(2*60**2)
-        #create the mask for the i region
-        mask_ramin = ra_p >= ra_p_min
-        mask_ramax = ra_p <= ra_p_max
-        mask_decmin = dec_p >= dec_p_min
-        mask_decmax = dec_p <= dec_p_max
-        mask_i = mask_ramin*mask_ramax*mask_decmin*mask_decmax
-        
-        #combine the i mask with the previous masks
-        if i == 0:
-            mask = mask_i
-        else:
-            #if the galaxy was in any mask then it should be in the concatenated mask
-            mask_tmp = mask + mask_i
-            mask = mask_tmp > 0
-
-    #apply the region filter to the input galaxy catalog
-    # see http://www.ucolick.org/~phillips/deimos_ref/masks.html for file format
-    Nint = cat.shape[0]
-    cat = cat[mask]
-    Nfin = cat.shape[0]
-    Ncut = Nint - Nfin
-    print 'obsplan: {0} rows were removed from the catalog with\n \
-           {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
-    return cat,box 
-
-def write_dsim_header(F,prefix,box):
-    F.write('#This catalog was created by plan*.py and is intended to be used \n')
-    F.write('#as input to the deimos slitmask software following the format \n')
-    F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
-    F.write('#Note that the automatic generation of this file does not include\n')
-    F.write('#guide or alignment stars.\n')
-    F.write('#ttype1 = objID\n')
-    F.write('#ttype2 = ra\n')
-    F.write('#ttype3 = dec\n')
-    F.write('#ttype4 = equinox\n')
-    F.write('#ttype5 = magnitude\n')
-    F.write('#ttype6 = passband\n')
-    F.write('#ttype7 = priority_code\n')
-    F.write('#ttype8 = sample\n')
-    F.write('#ttype9 = selectflag\n')
-    F.write('#ttype10 = pa_slit\n')
-    F.write('#ttype11 = len1\n')
-    F.write('#ttype12 = len2\n')
-    #Write in the Slitmask information line
-    F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
-            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))
-
-#def write_guide_stars(F, cat):
-#    '''
-#    Status: WORK IN PROGRESS
-#
-#    Guide stars are in the guide camera region with Preselect code = -1 
-#    INPUT:
-#    F = filestream for writing the file out to 
-#    cat = dataframe catalog of the stars
-#    
-#    Feature to be implemented: with a use of pyds9 
-#    we should be able to select and pick regions without leaving python
-#    and outputting the list of selected stars directly for writing 
-#    
-#    #a sample line should look like
-#    #F.write("176676037	10:54:07.305	54:56:42.927	2000	16.33	R	-1	0	1\n")
-#    '''
-#    for i in cat.index:
-#        F.write("{0} {1}:{2} 2000	{3}	R	-1	0	1\n".format(
-#            cat['objID'][i],cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
-#
-#    return
-
-#def write_align_stars(filestream, align_star_cat):
-#    ''''
-#    Work in progress
-#    #sample line 
-#    #F.write("412932112	10:54:44.062	54:48:23.996	2000	17.91	R	-2	0	1\n")
-#    '''
-#    for i in cat.index:
-#        F.write("{0} {1} {2} 2000	{3}	R	-2	0	1\n".format(cat['objID'][i],
-#           cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
-#    return
-
-def write_galaxies_to_dsim(F, cat,  sky):
-    '''
-    Stability: works
-    INPUT:
-    F = file stream of the file to write to 
-    cat = dataframe object of the galaxy 
-    '''
-    print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
-    print 'if you are not using SDSS, modify\
-    obsplan_functions.write_galaxies_to_dsim() to disable this'
-    cat['shortID'] = cat['objID']-1237660000000000000
-    #current dsim input can only accept obj name limited to 16 characters 
-    #SDSS ObjID has 18 characters 
-    #instead of writting ObjID out we write the index out
-    for i in cat.index:
-        if cat['sign'][i]==-1:
-            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
-                        .format(cat['shortID'][i],cat['rah'][i],
-                                cat['ram'][i],
-                                cat['ras'][i], 
-                                cat['decd'][i],
-                                cat['decm'][i],
-                                cat['decs'][i],
-                                cat['dered_r'][i],
-                                cat['weight'][i],
-                                cat['sample'][i],
-                                cat['pscode'][i],
-                                cat['PA'][i],
-                                cat['deVRad_r'][i]/2.+sky[0],
-                                cat['deVRad_r'][i]/2.+sky[1]))
-        else:
-            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
-                        .format(cat['shortID'][i],cat['rah'][i],
-                                cat['ram'][i],
-                                cat['ras'][i], 
-                                cat['decd'][i],
-                                cat['decm'][i],
-                                cat['decs'][i],
-                                cat['dered_r'][i],
-                                cat['weight'][i],
-                                cat['sample'][i],
-                                cat['pscode'][i],
-                                cat['PA'][i],
-                                cat['deVRad_r'][i]/2.+sky[0],
-                                cat['deVRad_r'][i]/2.+sky[1]))
-
-    return
-
-def write_mask_for_dsim(gal_cat, guide_star_cat, align_star_cat, mask_reg, 
-                        dsim_outfile):
-    '''
-    INPUT:
-    gal_cat = catalog dataframe object containing galaxies in the mask region
-    star_cat = catalog dataframe object containing guide stars in mask region
-    align_star_cat = catalog dataframe object containing alignment stars 
-    mask_reg = string denoting the name of the mask region file
-    dsim_outfile = string denoting the name of the output file 
-
-    OUTPUT:
-    file as input for dsim (an IRAF module on Theta)
-    '''
-    F = open(dsim_outputfile, 'w')
-    write_dsim_header(F)
-    write_guide_stars(F,guide_star_cat)
-    write_align_stars(F,align_star_cat)
-    write_galaxies(F,gal_cat)
-    F.close()
-
-    return
-
-def output_target_as_exclude_csv():
-    '''
-    write out target of one mask as input of exclusion file
-    '''
-
-
-    return
 
 def PAround(cat,field,PAmin,PAmax,PAvalue,maskPA):
     '''
@@ -676,19 +507,21 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
 
 def exclude_objects(cat, exclude_file):
     '''
-   works 
+    works 
     '''
     #actually we can selectively import columns using pandas to make read_csv
     #faster 
     #i just didn't bother to figure this out
     col_name = ['objID','sex_ra','sex_dec','equinox','dered_r','R','weight',
                'sample','pscode','stuff1','stuff2','stuff3']
-    exclude_cat = pd.read_csv(exclude_file,skiprows=7,delimiter=r"\s*",names=col_name)
+    exclude_cat = pd.read_csv(exclude_file,skiprows=7,delimiter=r"\s*",
+                              names=col_name,comment='#')
     print 'If you see error message for the reading in of exclude_cat'
     print 'check if there are non-data rows in the middle of the file'
     exclude_cat = exclude_cat.dropna()
 
-    print 'obsplan exclude_objects: apply exclusion list to further filter catalog'
+    print 'obsplan exclude_objects: apply exclusion list to further filter'+\
+            'catalog'
     mask_ex = numpy.zeros(cat.shape[0])
     i = 0
     for i in exclude_cat.index:
@@ -706,36 +539,92 @@ def exclude_objects(cat, exclude_file):
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
     print 'obsplan exclude_objects:'
-    print '{0} rows were removed from the catalog with {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
+    print '{0} rows were removed from the catalog with {1} initial rows,'+\
+            'leaving {2} rows'.format(Ncut,Nint,Nfin)
     return cat
 
-#def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
+#----functions for writing out to ds9---------------------------------
+
+def return_objects_in_mask_region(cat,regfile):
+    '''
+    INPUT:
+    cat = dataframe catalog object 
+    
+    regfile = 
+    mask file generated from ds9 see warning statement below about 
+    how this mask file should be created 
+
+    OUTPUT:
+    cat = dataframe with only the objects in the box region 
+    box = info specifying how the mask is oriented 
+    
+    '''
+    box = numpy.fromregex(regfile,
+        r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)\",([0-9]*\.?[0-9]+)",
+        [('xc',numpy.float),('yc',numpy.float),('width',numpy.float),
+        ('height',numpy.float),('angle',numpy.float)])
+
+    if len(box) == 0: 
+        print 'WARNING!!!!! \
+               When saving your reg file,choose fk5 > WCS > degrees\n \
+               in the popup menu there is something wrong with your\n \
+               box region file format~!\n \
+               You have put a regfile with wrong coordinate format'
+
+    d2r = numpy.pi/180.0
+    #loop through the regions creating masks for galaxy inclusion
+    for i in numpy.arange(numpy.shape(box)[0]):
+        #phi is the ccw angle from the +East axis
+        xc = box[i][0]
+        yc = box[i][1]
+        w = box[i][2]
+        h = box[i][3]
+        phi=box[i][4]*d2r
+        #rotate the galaxies into the "primed" (p) region coorditate frame centered
+        #at the center of the region
+        ra_p = (np.array(cat['ra'])-xc)*numpy.cos(yc*d2r)*numpy.cos(-phi)+(np.array(cat['dec'])-yc)*numpy.sin(-phi)
+        dec_p = -(np.array(cat['ra'])-xc)*numpy.cos(yc*d2r)*numpy.sin(-phi)+(cat['dec']-yc)*numpy.cos(-phi)
+        #determine the min and max bounds of the region
+        # min = (box center [deg])-((box height [sec])/(2*60**2))
+        ra_p_min = -w/(2*60**2)
+        ra_p_max = w/(2*60**2)
+        dec_p_min = -h/(2*60**2)
+        dec_p_max = h/(2*60**2)
+        #create the mask for the i region
+        mask_ramin = ra_p >= ra_p_min
+        mask_ramax = ra_p <= ra_p_max
+        mask_decmin = dec_p >= dec_p_min
+        mask_decmax = dec_p <= dec_p_max
+        mask_i = mask_ramin*mask_ramax*mask_decmin*mask_decmax
+        
+        #combine the i mask with the previous masks
+        if i == 0:
+            mask = mask_i
+        else:
+            #if the galaxy was in any mask then it should be in the concatenated mask
+            mask_tmp = mask + mask_i
+            mask = mask_tmp > 0
+
+    #apply the region filter to the input galaxy catalog
+    # see http://www.ucolick.org/~phillips/deimos_ref/masks.html for file format
+    Nint = cat.shape[0]
+    cat = cat[mask]
+    Nfin = cat.shape[0]
+    Ncut = Nint - Nfin
+    print 'obsplan: {0} rows were removed from the catalog with\n \
+           {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
+    return cat,box 
+
+#def write_align_stars(filestream, align_star_cat):
+#    ''''
+#    Work in progress
+#    #sample line 
+#    #F.write("412932112	10:54:44.062	54:48:23.996	2000	17.91	R	-2	0	1\n")
 #    '''
-#    Status: work in progress
-#    Write the lines of the stars to dsim input format
-#    To add more documentation
-#    '''
-#    if output_prefix == None and F == None:
-#        print 'You have to specify where to output your stars'
-#    if output_prefix != None: 
-#        output = output_prefix+'.txt'
-#        print 'Writing list of candidate stars to file '+output
-#        F=open(output,'w')
-#
-#    #To add warning if both prefix and F is present
-#        
 #    for i in cat.index:
-#        obj = cat['objID']
-#        ra = cat['ra']
-#        ra = str(tools.deg2ra(ra,":"))
-#        dec = cat['dec']
-#        dec = str(tools.deg2dec(dec,":"))
-#        #rmag = cat[i,key['dered_r']]
-#        output= 'F.write("'+'{0:4.0f}\t'.format(obj)+ra+'\t'+ dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
-#        F.write(output)
-#
-#    if prefix !=None: 
-#        F.close()
+#        F.write("{0} {1} {2} 2000	{3}	R	-2	0	1\n".format(cat['objID'][i],
+#           cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
+#    return
 
 def write_circle_reg(cat,output_prefix):
     '''
@@ -795,3 +684,147 @@ def write_slit_reg(cat,output_prefix,sky,color1='green',color2='blue'):
         F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
     F.close()
 
+
+#----functions for writing to dsim---------------------------------- 
+
+def write_dsim_header(F,prefix,box):
+    F.write('#This catalog was created by plan*.py and is intended to be used \n')
+    F.write('#as input to the deimos slitmask software following the format \n')
+    F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
+    F.write('#Note that the automatic generation of this file does not include\n')
+    F.write('#guide or alignment stars.\n')
+    F.write('#ttype1 = objID\n')
+    F.write('#ttype2 = ra\n')
+    F.write('#ttype3 = dec\n')
+    F.write('#ttype4 = equinox\n')
+    F.write('#ttype5 = magnitude\n')
+    F.write('#ttype6 = passband\n')
+    F.write('#ttype7 = priority_code\n')
+    F.write('#ttype8 = sample\n')
+    F.write('#ttype9 = selectflag\n')
+    F.write('#ttype10 = pa_slit\n')
+    F.write('#ttype11 = len1\n')
+    F.write('#ttype12 = len2\n')
+    #Write in the Slitmask information line
+    F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
+            .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))
+#def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
+#    '''
+#    Status: work in progress
+#    Write the lines of the stars to dsim input format
+#    To add more documentation
+#    '''
+#    if output_prefix == None and F == None:
+#        print 'You have to specify where to output your stars'
+#    if output_prefix != None: 
+#        output = output_prefix+'.txt'
+#        print 'Writing list of candidate stars to file '+output
+#        F=open(output,'w')
+#
+#    #To add warning if both prefix and F is present
+#        
+#    for i in cat.index:
+#        obj = cat['objID']
+#        ra = cat['ra']
+#        ra = str(tools.deg2ra(ra,":"))
+#        dec = cat['dec']
+#        dec = str(tools.deg2dec(dec,":"))
+#        #rmag = cat[i,key['dered_r']]
+#        output= 'F.write("'+'{0:4.0f}\t'.format(obj)+ra+'\t'+ dec+'\t2000\t{0:2.2f}'.format(cat['dered_r'])+'\tR\t-2\t0\t1' +r'\n")'+'\n'
+#        F.write(output)
+#
+#    if prefix !=None: 
+#        F.close()
+
+#def write_mask_for_dsim(gal_cat, guide_star_cat, align_star_cat, mask_reg, 
+#                        dsim_outfile):
+#    '''
+#    Status: WORK IN PROGRESS
+#    INPUT:
+#    gal_cat = catalog dataframe object containing galaxies in the mask region
+#    star_cat = catalog dataframe object containing guide stars in mask region
+#    align_star_cat = catalog dataframe object containing alignment stars 
+#    mask_reg = string denoting the name of the mask region file
+#    dsim_outfile = string denoting the name of the output file 
+#
+#    OUTPUT:
+#    file as input for dsim (an IRAF module on Theta)
+#    '''
+#    F = open(dsim_outputfile, 'w')
+#    write_dsim_header(F)
+#    write_guide_stars(F,guide_star_cat)
+#    write_align_stars(F,align_star_cat)
+#    write_galaxies(F,gal_cat)
+#    F.close()
+#
+#    return
+
+def write_galaxies_to_dsim(F, cat,  sky):
+    '''
+    Stability: works
+    INPUT:
+    F = file stream of the file to write to 
+    cat = dataframe object of the galaxy 
+    '''
+    print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
+    print 'if you are not using SDSS, modify\
+    obsplan_functions.write_galaxies_to_dsim() to disable this'
+    cat['shortID'] = cat['objID']-1237660000000000000
+    #current dsim input can only accept obj name limited to 16 characters 
+    #SDSS ObjID has 18 characters 
+    #instead of writting ObjID out we write the index out
+    for i in cat.index:
+        if cat['sign'][i]==-1:
+            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
+                                cat['ram'][i],
+                                cat['ras'][i], 
+                                cat['decd'][i],
+                                cat['decm'][i],
+                                cat['decs'][i],
+                                cat['dered_r'][i],
+                                cat['weight'][i],
+                                cat['sample'][i],
+                                cat['pscode'][i],
+                                cat['PA'][i],
+                                cat['deVRad_r'][i]/2.+sky[0],
+                                cat['deVRad_r'][i]/2.+sky[1]))
+        else:
+            F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
+                                cat['ram'][i],
+                                cat['ras'][i], 
+                                cat['decd'][i],
+                                cat['decm'][i],
+                                cat['decs'][i],
+                                cat['dered_r'][i],
+                                cat['weight'][i],
+                                cat['sample'][i],
+                                cat['pscode'][i],
+                                cat['PA'][i],
+                                cat['deVRad_r'][i]/2.+sky[0],
+                                cat['deVRad_r'][i]/2.+sky[1]))
+
+    return
+
+#def write_guide_stars(F, cat):
+#    '''
+#    Status: WORK IN PROGRESS
+#
+#    Guide stars are in the guide camera region with Preselect code = -1 
+#    INPUT:
+#    F = filestream for writing the file out to 
+#    cat = dataframe catalog of the stars
+#    
+#    Feature to be implemented: with a use of pyds9 
+#    we should be able to select and pick regions without leaving python
+#    and outputting the list of selected stars directly for writing 
+#    
+#    #a sample line should look like
+#    #F.write("176676037	10:54:07.305	54:56:42.927	2000	16.33	R	-1	0	1\n")
+#    '''
+#    for i in cat.index:
+#        F.write("{0} {1}:{2} 2000	{3}	R	-1	0	1\n".format(
+#            cat['objID'][i],cat['ra'][i],cat['dec'][i], cat['dered_r'][i]))
+#
+#    return
