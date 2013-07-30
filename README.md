@@ -19,7 +19,8 @@ Given a space separated catalog of galaxies,  the ipython notebook script (with 
 * make ds9 contour of the number density map of galaxies 
 * make ds9-regions that has appropriate angular sizes to mimick the slitmask
 and the guider camera 
-* filter out stars and put them at the area of the slitmask for easy selection 
+* filter out stars and display them as ds9-circle-regions on top of the slitmask for easy selection 
 * read back in chosen stars and output them appropriately in dsim format
+* write dsim input file 
 
 etc. 
