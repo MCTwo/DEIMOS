@@ -71,6 +71,8 @@ def convert_to_sexadec_coord(cat,ra_field='ra',dec_field='dec',
     res = (dec-cat[out_decd_field])*60.
     cat[out_decm_field] = np.floor(res)
     cat[out_decs_field] = (res-cat[out_decm_field])*60.
+    print 'obsplan_functions.convert_to_sexadec_coord:'
+    print 'new fields for RA and DEC in sexagesimal format created'
     return cat
 
 #----Diagnostic functions----------------------------------------------
@@ -156,9 +158,9 @@ def no_density2fits(cat, prefix, rabin=50, N_boot=None):
     hdu.header.update('cd1_2',0)
     hdu.header.update('cd2_1',0)
     hdu.header.update('cd2_2',yscale)
-    filename = prefix+'_masked_nodensity'
+    filename = prefix
     hdu.writeto(filename+'.fits',clobber=True)
-    print 'Fits file with name: ', filename, ' has been written'
+    print 'Fits file with name: ', filename+'.fits', ' has been written'
     return h, edge1, edge2
 
 def draw_contour(xbin, ybin, hist, clustername):
@@ -293,6 +295,8 @@ def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None,
                             save_diag=False, verbose=True):
     '''
     Stability : works 
+    Only entries satisfying the specified bounds will be left
+    other entires will be filtered out 
     INPUT:
     cat = dataframe containing your data
     field = string denoting the field name 
@@ -308,6 +312,10 @@ def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None,
     if (upperbound!=None and lowerbound!=None):
         mask = np.logical_and(cat[field]>=lowerbound, cat[field]<= upperbound)
         cat = cat[mask]
+
+        print 'Started out with {0}\n filtered out '.format(dataNo)+\
+        '{0} data entries\n with {1}'.format(dataNo-cat.shape[0],cat.shape[0])+\
+            ' remaining'
         return cat
     else:
         if lowerbound!=None:
@@ -350,6 +358,7 @@ def determine_weight(cat, x, sigma_x, mu_cl, weight_field='weight',
         plt.axvline(mu_cl,color='r')
         plt.plot(cat['z_phot'],cat[weight_field],'x')
         plt.show()
+    print 'A new field called '+weight_field+' has been added to catalog'
     return cat
 
 def determine_sample_no(cat, sample_no, field, first_sample = False, 
@@ -380,6 +389,7 @@ def determine_sample_no(cat, sample_no, field, first_sample = False,
 
     '''
     #create a new field for storing sample number
+    print 'A new field with key: sample has been created for the catalog '
     if first_sample ==True:
         cat['sample'] = pd.Series(3*np.ones(cat.shape[0]),index=cat.index)
     
@@ -505,23 +515,37 @@ def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
         plt.show()
     return cat
 
-def exclude_objects(cat, exclude_file):
+
+def find_objects(cat, colname):
     '''
     works 
+    inputs: 
+    cat = dataframe objects that contains the info of your targets 
+    exclude_file = string of character that contains path to the 
+                    exclude file that should have the format of dsim output
+                    files since we would not want duplicate objects between
+                    masks
+                    this file should NOT contain any headers 
+    skiprows = integer, number of rows to skip while reading in files  
+    delimiter =  string of characters to be used as delimiter, regex supported 
+    comment = string of character to be recogized as start of a comment
+              read in of that particular commented line will be skipped 
     '''
     #actually we can selectively import columns using pandas to make read_csv
     #faster 
     #i just didn't bother to figure this out
     col_name = ['objID','sex_ra','sex_dec','equinox','dered_r','R','weight',
                'sample','pscode','stuff1','stuff2','stuff3']
-    exclude_cat = pd.read_csv(exclude_file,skiprows=7,delimiter=r"\s*",
-                              names=col_name,comment='#')
-    print 'If you see error message for the reading in of exclude_cat'
+    print 'obsplan_functions.exclude_objects():'
+    print 'Reading in exclude file: If you see error messages '
     print 'check if there are non-data rows in the middle of the file'
+    exclude_cat = pd.read_csv(exclude_file,skiprows=skiprows,
+                              delimiter=delimiter,
+                              names=col_name,comment='#')
     exclude_cat = exclude_cat.dropna()
 
-    print 'obsplan exclude_objects: apply exclusion list to further filter'+\
-            'catalog'
+    #print 'obsplan exclude_objects: apply exclusion list to further filter'+\
+    #        'catalog'
     mask_ex = numpy.zeros(cat.shape[0])
     i = 0
     for i in exclude_cat.index:
@@ -538,10 +562,67 @@ def exclude_objects(cat, exclude_file):
     cat = cat[mask_ex]
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
-    print 'obsplan exclude_objects:'
-    print '{0} rows were removed from the catalog with {1} initial rows,'+\
-            'leaving {2} rows'.format(Ncut,Nint,Nfin)
+    print 'obsplan.exclude_objects():'
+    print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
+            'initial rows, leaving {0} rows'.format(Nfin)
     return cat
+
+def exclude_objects(cat, exclude_file, skiprows=0, delimiter=r"\s*",comment='#'):
+    '''
+    works 
+    inputs: 
+    cat = dataframe objects that contains the info of your targets 
+    exclude_file = string of character that contains path to the 
+                    exclude file that should have the format of dsim output
+                    files since we would not want duplicate objects between
+                    masks
+                    this file should NOT contain any headers 
+    skiprows = integer, number of rows to skip while reading in files  
+    delimiter =  string of characters to be used as delimiter, regex supported 
+    comment = string of character to be recogized as start of a comment
+              read in of that particular commented line will be skipped 
+    '''
+    #actually we can selectively import columns using pandas to make read_csv
+    #faster 
+    #i just didn't bother to figure this out
+    col_name = ['objID','sex_ra','sex_dec','equinox','dered_r','R','weight',
+               'sample','pscode','stuff1','stuff2','stuff3']
+    print 'obsplan_functions.exclude_objects():'
+    print 'Reading in exclude file: If you see error messages '
+    print 'check if there are non-data rows in the middle of the file'
+    exclude_cat = pd.read_csv(exclude_file,skiprows=skiprows,
+                              delimiter=delimiter,
+                              names=col_name,comment='#')
+    exclude_cat = exclude_cat.dropna()
+
+    #print 'obsplan exclude_objects: apply exclusion list to further filter'+\
+    #        'catalog'
+    mask_ex = numpy.zeros(cat.shape[0])
+    i = 0
+    for i in exclude_cat.index:
+        oid = int(exclude_cat['objID'][i])
+        if i == 0:
+            mask_ex = cat['objID']-1237660000000000000  == oid 
+            i=1
+        else:
+            mask_i = cat['objID']-1237660000000000000  == oid
+            mask_tmp = mask_ex+mask_i
+            mask_ex = mask_tmp > 0
+    mask_ex = mask_ex == False
+    Nint = cat.shape[0]
+    cat = cat[mask_ex]
+    Nfin = cat.shape[0]
+    Ncut = Nint - Nfin
+    print 'obsplan.exclude_objects():'
+    print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
+            'initial rows, leaving {0} rows'.format(Nfin)
+    return cat
+
+
+#----functions for reading in region files---------------------------------- 
+
+
+
 
 #----functions for writing out to ds9---------------------------------
 
@@ -613,7 +694,7 @@ def return_objects_in_mask_region(cat,regfile):
     Ncut = Nint - Nfin
     print 'obsplan: {0} rows were removed from the catalog with\n \
            {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
-    return cat,box 
+    return cat, box 
 
 #def write_align_stars(filestream, align_star_cat):
 #    ''''
@@ -684,6 +765,48 @@ def write_slit_reg(cat,output_prefix,sky,color1='green',color2='blue'):
         F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
     F.close()
 
+def show_slits_in_ds9(cat, ds9, sky, color1='green',color2='blue'):
+    '''
+    cat = dataframe object containing the gal
+    ds9 = pyds9 XPA instance 
+    sky = amount of sky to include on both sides of the slit
+    color1 = color for sample 1 objects 
+    color2 = color for sample 2 objects <D-s>
+    '''
+    ###
+    ### Survey Galaxies
+    ###
+    for i in cat.index:
+        ra = cat['ra'][i]
+        dec = cat['dec'][i]
+        height = cat['deVRad_r'][i] +sky[0]+sky[1]
+        #there is a 90 degree discrepancy between dsim and ds9 definitions
+        #of angles
+        angle = cat['PA'][i] +90
+        if cat['sample'][i] == 1:
+            color = color1
+        else:
+            color = color2
+        ds9.set("regions",' fk5; box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
+    return 
+
+def show_circ_in_ds9(cat, ds9, color='yellow'):
+    for i in cat.index:
+        ra = cat['ra'][i]
+        dec = cat['dec'][i]
+        size = cat['deVRad_r'][i]+10
+        #!!!!Warning!!!! if your OBJID is longer than 18 digit 
+        #You need to change the digit precision of your output line 
+        obj = cat['objID'][i]
+        R = cat['dered_r'][i]
+        #type = cat['type'][i]
+        #!!!!Warning!!!! if your OBJID is longer than 19 digit 
+        #You need to change the digit precision of your output line 
+        ds9.set("regions", ' fk5; circle({0:1.5f},{1:1.5f}'.format(ra,dec)+\
+                ',{0:1.1f}") '.format(size)+\
+                '#color={0}'.format(color)+\
+                ' text={'+'{0:19d}--{1:1.2f}'.format(obj,R)+'}\n')
+    return 
 
 #----functions for writing to dsim---------------------------------- 
 
@@ -773,6 +896,7 @@ def write_galaxies_to_dsim(F, cat,  sky):
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
+    print '# of galaxies written to file = {0}'.format(cat.shape[0])
     for i in cat.index:
         if cat['sign'][i]==-1:
             F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
@@ -785,7 +909,7 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['dered_r'][i],
                                 cat['weight'][i],
                                 cat['sample'][i],
-                                cat['pscode'][i],
+                                0,
                                 cat['PA'][i],
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
@@ -800,12 +924,74 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['dered_r'][i],
                                 cat['weight'][i],
                                 cat['sample'][i],
-                                cat['pscode'][i],
+                                0,
                                 cat['PA'][i],
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
 
     return
+
+def write_guide_stars_to_dsim(F, cat):
+    '''
+    Stability: works
+    INPUT:
+    F = file stream of the file to write to 
+    cat = dataframe object of the galaxy 
+    '''
+    print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
+    print 'if you are not using SDSS, modify\
+    obsplan_functions.write_galaxies_to_dsim() to disable this'
+    cat['shortID'] = cat['objID']-1237660000000000000
+    print '# of guide stars written to file = {0}'.format(cat.shape[0])
+    #current dsim input can only accept obj name limited to 16 characters 
+    #SDSS ObjID has 18 characters 
+    #instead of writting ObjID out we write the index out
+    for i in cat.index:
+        F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
+                                cat['ram'][i],
+                                cat['ras'][i], 
+                                cat['decd'][i],
+                                cat['decm'][i],
+                                cat['decs'][i],
+                                cat['dered_r'][i],
+                                -1,
+                                0,
+                                1))
+    return
+
+
+def write_align_stars_to_dsim(F, cat):
+    '''
+    Stability: works
+    INPUT:
+    F = file stream of the file to write to 
+    cat = dataframe object of the galaxy 
+    '''
+    print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
+    print 'if you are not using SDSS, modify\
+    obsplan_functions.write_galaxies_to_dsim() to disable this'
+    cat['shortID'] = cat['objID']-1237660000000000000
+    #current dsim input can only accept obj name limited to 16 characters 
+    #SDSS ObjID has 18 characters 
+    #instead of writting ObjID out we write the index out
+    print '# of alignment stars written to file = {0}'.format(cat.shape[0])
+    for i in cat.index:
+        F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\n'
+                        .format(cat['shortID'][i],cat['rah'][i],
+                                cat['ram'][i],
+                                cat['ras'][i], 
+                                cat['decd'][i],
+                                cat['decm'][i],
+                                cat['decs'][i],
+                                cat['dered_r'][i],
+                                -2,
+                                0,
+                                1))
+    return
+
+
+
 
 #def write_guide_stars(F, cat):
 #    '''

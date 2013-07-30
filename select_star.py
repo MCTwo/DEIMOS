@@ -64,7 +64,8 @@ box = numpy.fromregex(regfile,r"box\(([0-9]*\.?[0-9]+),([0-9]*\.?[0-9]+),([0-9]*
                       [('xc',numpy.float),('yc',numpy.float),('width',numpy.float),('height',numpy.float),('angle',numpy.float)])
 
 if len(box[0]) == 0: 
-    print 'WARNING!!!!! there is something wrong with your box region file format~!\n You have put a regfile with wrong coordinate format'
+    print 'WARNING!!!!! there is something wrong with your box region file '+\
+            'format~!\n You have put a regfile with wrong coordinate format'
 
 d2r = numpy.pi/180.0
 #loop through the regions creating masks for galaxy inclusion
@@ -79,8 +80,10 @@ for i in numpy.arange(numpy.shape(box)[0]):
     phi=box[i][4]*d2r
     #rotate the galaxies into the "primed" (p) region coorditate frame centered
     #at the center of the region
-    ra_p = (cat['ra']-xc)*numpy.cos(yc*d2r)*numpy.cos(-phi)+(cat['dec']-yc)*numpy.sin(-phi)
-    dec_p = -(cat['ra']-xc)*numpy.cos(yc*d2r)*numpy.sin(-phi)+(cat['dec']-yc)*numpy.cos(-phi)
+    ra_p = (cat['ra']-xc)*numpy.cos(yc*d2r)*numpy.cos(-phi)+\
+            (cat['dec']-yc)*numpy.sin(-phi)
+    dec_p = -(cat['ra']-xc)*numpy.cos(yc*d2r)*numpy.sin(-phi)+\
+            (cat['dec']-yc)*numpy.cos(-phi)
     #determine the min and max bounds of the region
     # min = (box center [deg])-((box height [sec])/(2*60**2))
     ra_p_min = -w/(2*60**2)
