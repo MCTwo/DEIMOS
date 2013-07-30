@@ -13,7 +13,7 @@ Dependencies:
 * pyfits
 * pandas 
 
-Given a space separated catalog of galaxies,  the ipython notebook script (with a running instance of ds9) is capable of: 
+Given a space separated catalog of galaxies+stars,  the ipython notebook script (with a running instance of ds9) is capable of: 
 * weighing how likely each galaxies would be members based on photoz 
 * making a number density map of the galaxies(potential members) in fits format 
 * make ds9 contour of the number density map of galaxies 
