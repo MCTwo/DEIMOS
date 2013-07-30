@@ -4,7 +4,7 @@ DEIMOS
 Programs useful for Keck DEIMOS planning, observing, and reduction
 
 This branch contains:
-* an example ipython notebook that interacts with an existng ds9 instance 
+* an example ipython notebook that interacts with an existng ds9 instance called 'plan_zwcl2341_m3.ipynb' 
 * 'obsplan_functions.py' which contains the function that the interactive ipython notebook calls 
 * a tar.gz file with all the required input files for the IPython notebook 
 
