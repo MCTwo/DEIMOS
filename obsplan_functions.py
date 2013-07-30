@@ -73,6 +73,7 @@ def convert_to_sexadec_coord(cat,ra_field='ra',dec_field='dec',
     cat[out_decs_field] = (res-cat[out_decm_field])*60.
     print 'obsplan_functions.convert_to_sexadec_coord:'
     print 'new fields for RA and DEC in sexagesimal format created'
+    print '--------------------------------------------------------'
     return cat
 
 #----Diagnostic functions----------------------------------------------
@@ -161,6 +162,7 @@ def no_density2fits(cat, prefix, rabin=50, N_boot=None):
     filename = prefix
     hdu.writeto(filename+'.fits',clobber=True)
     print 'Fits file with name: ', filename+'.fits', ' has been written'
+    print '--------------------------------------------------------'
     return h, edge1, edge2
 
 def draw_contour(xbin, ybin, hist, clustername):
@@ -313,9 +315,10 @@ def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None,
         mask = np.logical_and(cat[field]>=lowerbound, cat[field]<= upperbound)
         cat = cat[mask]
 
-        print 'Started out with {0}\n filtered out '.format(dataNo)+\
-        '{0} data entries\n with {1}'.format(dataNo-cat.shape[0],cat.shape[0])+\
-            ' remaining'
+        print '{0}-{1}={2} entries remaining'.format(dataNo,
+                                                     dataNo-cat.shape[0],
+                                                     cat.shape[0])
+        print '--------------------------------------------------------'
         return cat
     else:
         if lowerbound!=None:
@@ -335,6 +338,7 @@ def filter_catalog_dataframe(cat,field,lowerbound=None, upperbound=None,
     print 'Started out with {0}\n filtered out '.format(dataNo)+\
         '{0} data entries\n with {1}'.format(dataNo-cat.shape[0],cat.shape[0])+\
             ' remaining'
+    print '--------------------------------------------------------'
 
     return cat 
 
@@ -562,9 +566,11 @@ def find_objects(cat, colname):
     cat = cat[mask_ex]
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
-    print 'obsplan.exclude_objects():'
-    print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
-            'initial rows, leaving {0} rows'.format(Nfin)
+    print 'obsplan_function.exclude_objects():'
+    print '{1}-{0}={2}'.format(Ncut,Nint,Nfin)
+    print '--------------------------------------------------------'
+    #print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
+    #        'initial rows, leaving {0} rows'.format(Nfin)
     return cat
 
 def exclude_objects(cat, exclude_file, skiprows=0, delimiter=r"\s*",comment='#'):
@@ -614,8 +620,10 @@ def exclude_objects(cat, exclude_file, skiprows=0, delimiter=r"\s*",comment='#')
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
     print 'obsplan.exclude_objects():'
-    print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
-            'initial rows, leaving {0} rows'.format(Nfin)
+    print '{1}-{0}={2}'.format(Ncut,Nint,Nfin)
+    print '--------------------------------------------------------'
+    #print '{0} rows were removed from the catalog with {1} '.format(Ncut,Nint)+\
+    #        'initial rows, leaving {0} rows'.format(Nfin)
     return cat
 
 
@@ -651,6 +659,7 @@ def return_objects_in_mask_region(cat,regfile):
                in the popup menu there is something wrong with your\n \
                box region file format~!\n \
                You have put a regfile with wrong coordinate format'
+        print '--------------------------------------------------------'
 
     d2r = numpy.pi/180.0
     #loop through the regions creating masks for galaxy inclusion
@@ -692,8 +701,11 @@ def return_objects_in_mask_region(cat,regfile):
     cat = cat[mask]
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
-    print 'obsplan: {0} rows were removed from the catalog with\n \
-           {1} initial rows, leaving {2} rows'.format(Ncut,Nint,Nfin)
+    print 'obsplan.return_objects in mask region: '\
+           '{0} rows removed: {1} initial rows; {2} remaining rows'.format(Ncut,
+                                                                           Nint,
+                                                                           Nfin)
+    print '--------------------------------------------------------'
     return cat, box 
 
 #def write_align_stars(filestream, align_star_cat):
@@ -744,6 +756,7 @@ def write_circle_reg(cat,output_prefix):
 def write_slit_reg(cat,output_prefix,sky,color1='green',color2='blue'):
     outputname = output_prefix+'_slits.reg'
     print "reg file with name of:",outputname,"has been written."
+    print '--------------------------------------------------------'
     F = open(outputname,'w')
     F.write('global color=green dashlist=8 3 width=1 font="helvetica 10 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1'+'\n')
     F.write('fk5'+'\n')
@@ -892,11 +905,13 @@ def write_galaxies_to_dsim(F, cat,  sky):
     print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
     print 'if you are not using SDSS, modify\
     obsplan_functions.write_galaxies_to_dsim() to disable this'
+    print '--------------------------------------------------------'
     cat['shortID'] = cat['objID']-1237660000000000000
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
     print '# of galaxies written to file = {0}'.format(cat.shape[0])
+    print '--------------------------------------------------------'
     for i in cat.index:
         if cat['sign'][i]==-1:
             F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
@@ -941,8 +956,10 @@ def write_guide_stars_to_dsim(F, cat):
     print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
     print 'if you are not using SDSS, modify\
     obsplan_functions.write_galaxies_to_dsim() to disable this'
+    print '--------------------------------------------------------'
     cat['shortID'] = cat['objID']-1237660000000000000
     print '# of guide stars written to file = {0}'.format(cat.shape[0])
+    print '--------------------------------------------------------'
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
@@ -971,11 +988,13 @@ def write_align_stars_to_dsim(F, cat):
     print '!!!!!WARNING!!! Chopping off first 3 digit of SDSS ObjID'
     print 'if you are not using SDSS, modify\
     obsplan_functions.write_galaxies_to_dsim() to disable this'
+    print '--------------------------------------------------------'
     cat['shortID'] = cat['objID']-1237660000000000000
     #current dsim input can only accept obj name limited to 16 characters 
     #SDSS ObjID has 18 characters 
     #instead of writting ObjID out we write the index out
     print '# of alignment stars written to file = {0}'.format(cat.shape[0])
+    print '--------------------------------------------------------'
     for i in cat.index:
         F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\n'
                         .format(cat['shortID'][i],cat['rah'][i],
