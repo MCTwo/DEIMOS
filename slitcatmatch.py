@@ -10,16 +10,16 @@ import tools
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/rxcj1B/2013jan16/'
-binfile = 'rxcj1B.bintabs.fits' # probably don't need this if have maskname
-maskname = 'rxcj1B'
-zspecfile = 'zspec.dawson.rxcj1B.2013-05-29.fits'
+path = '/sandbox/deimos/a5231B/2013jan16/'
+binfile = 'a5231B.bintabs.fits' # probably don't need this if have maskname
+maskname = 'a5231B'
+zspecfile = 'zspec.dawson.a5231B.2013-08-05.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
-imgcat = '/Users/dawson/SkyDrive/Observing/Keck2012b/SlitmaskDesign/RXJ1053/Karen_dsimfiles/obsplan input/RXJ1053/rxj1053_sdsscat_shortobjid.txt' #path/name of the image catalog
-objkey = 'objID' #ttype name of the unique object id column
-imgcoord = ('ra','dec') #ttype name of the ra and dec columns in the image catalog
-mag = 'dered_r'
-outputfile = '/sandbox/deimos/rxcj1B/matchcat_rxcj1B_rev0.txt'
+imgcat = '/Users/dawson/SkyDrive/Research/Clusters/A523/catalogs/INT_VRI/a523_RVI.cat' #path/name of the image catalog
+objkey = 'NUMBERR' #ttype name of the unique object id column
+imgcoord = ('raR','decR') #ttype name of the ra and dec columns in the image catalog
+mag = 'MAGR'
+outputfile = '/sandbox/deimos/a5231B/matchcat_a5231B_revA.txt'
 ###########################
 ### PROGRAM
 ###########################

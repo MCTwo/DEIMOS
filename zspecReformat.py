@@ -2,8 +2,8 @@ import pyfits
 import numpy
 
 #user input
-fitsfile = '/sandbox/deimos/zspec.dawson.rxcj1B.2013-05-29.fits'
-outputfile = '/sandbox/deimos/rxcj1B/zspec.dawson.rxcj1B.2013-05-29.txt'
+fitsfile = '/sandbox/deimos/zspec.dawson.a5231B.2013-08-05.fits'
+outputfile = '/sandbox/deimos/a5231B/zspec.dawson.a5231B.2013-08-05.txt'
 
 hdulist = pyfits.open(fitsfile)
 
@@ -20,15 +20,15 @@ comm = tbdata.field('COMMENT')
 
 #print the selected columns to a text file
 f = open(outputfile,'w')
-f.write('This data is extracted from the following zspec output:\n')
-f.write(fitsfile+'\n')
-f.write('ttype0=objid\n')
-f.write('ttype1=slit\n')
-f.write('ttype2=mask\n')
-f.write('ttype3=z\n')
-f.write('ttype4=zerr\n')
-f.write('ttype5=quality\n')
-f.write('ttype6=comment\n')
+f.write('#This data is extracted from the following zspec output:\n')
+f.write('#'+fitsfile+'\n')
+f.write('#ttype0=objid\n')
+f.write('#ttype1=slit\n')
+f.write('#ttype2=mask\n')
+f.write('#ttype3=z\n')
+f.write('#ttype4=zerr\n')
+f.write('#ttype5=quality\n')
+f.write('#ttype6=comment\n')
 for i in numpy.arange(numpy.size(objid)):
     f.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(objid[i],slit[i],mask[i],z[i],zerr[i],qual[i],comm[i]))
     i+=1
