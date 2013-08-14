@@ -796,7 +796,9 @@ def show_slits_in_ds9(cat, ds9, sky, color1='green',color2='blue'):
         height = cat['deVRad_r'][i] +sky[0]+sky[1]
         #there is a 90 degree discrepancy between dsim and ds9 definitions
         #of angles
-        angle = cat['PA'][i] +90
+        #but if you are just using ds9 definitions, no need to + 90
+        #-90 degrees to go from ds9 to dsim definition
+        angle = cat['PA'][i] #+90
         if cat['sample'][i] == 1:
             color = color1
         else:
@@ -805,6 +807,11 @@ def show_slits_in_ds9(cat, ds9, sky, color1='green',color2='blue'):
     return 
 
 def show_circ_in_ds9(cat, ds9, color='yellow'):
+    '''
+    cat = dataframe object containing stars 
+    ds9 = pyds9 XPA instance 
+    color = string, color names that can be displayed by ds9
+    '''
     for i in cat.index:
         ra = cat['ra'][i]
         dec = cat['dec'][i]
@@ -841,6 +848,9 @@ def write_dsim_header(F,prefix,box):
     F.write('#ttype11 = len1\n')
     F.write('#ttype12 = len2\n')
     #Write in the Slitmask information line
+    #there is a 90 degree discrepancy between PA of 
+    #the ds9 mask and the dsim definition
+    #to change from ds9 to dsim, subtract 90 from ds9 def
     F.write('{0}\t{1:0.6f}\t{2:0.6f}\t2000\tPA={3:0.2f}\n'
             .format(prefix,box[0][0]/15.,box[0][1],box[0][4]-90))
 #def output_candidate_star_to_dsim(cat, output_prefix=None, F=None):
@@ -911,6 +921,9 @@ def write_galaxies_to_dsim(F, cat,  sky):
     #instead of writting ObjID out we write the index out
     print '# of galaxies written to file = {0}'.format(cat.shape[0])
     print '--------------------------------------------------------'
+    #there 's a 90 degree discrepancy between ds9 definition of PA 
+    #and the dsim definition , subtract 90 degrees to go from ds9 to dsim
+    #definition
     for i in cat.index:
         if cat['sign'][i]==-1:
             F.write('{0:13d}\t{1:02.0f}:{2:02.0f}:{3:06.3f}\t-{4:02.0f}:{5:02.0f}:{6:06.3f}\t2000\t{7:0.2f}\tR\t{8:0.0f}\t{9:0.0f}\t{10:0.0f}\t{11:0.2f}\t{12:0.1f}\t{13:0.1f}\n'
@@ -924,7 +937,7 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['weight'][i],
                                 cat['sample'][i],
                                 0,
-                                cat['PA'][i],
+                                cat['PA'][i]-90,
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
         else:
@@ -939,7 +952,7 @@ def write_galaxies_to_dsim(F, cat,  sky):
                                 cat['weight'][i],
                                 cat['sample'][i],
                                 0,
-                                cat['PA'][i],
+                                cat['PA'][i]-90,
                                 cat['deVRad_r'][i]/2.+sky[0],
                                 cat['deVRad_r'][i]/2.+sky[1]))
 
