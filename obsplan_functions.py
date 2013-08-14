@@ -775,7 +775,8 @@ def write_slit_reg(cat,output_prefix,sky,color1='green',color2='blue'):
         else:
             color = color2
 #        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) # color={4}'.format(ra,dec,height,angle,color)+'\n')
-        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2}) #color={4}'.format(ra,dec,height,angle,color)+' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
+        F.write('box({0:1.5f},{1:1.5f},{2:1.1f}",1",{3:0.2})#color={4}'.format(ra,dec,height,angle,color)+\
+                ' text={'+'{0:3.1f}'.format(cat['weight'][i])+'}\n')
     F.close()
 
 def show_slits_in_ds9(cat, ds9, sky, color1='green',color2='blue'):
@@ -827,8 +828,6 @@ def write_dsim_header(F,prefix,box):
     F.write('#This catalog was created by plan*.py and is intended to be used \n')
     F.write('#as input to the deimos slitmask software following the format \n')
     F.write('#outlined at http://www.ucolick.org/~phillips/deimos_ref/masks.html\n')
-    F.write('#Note that the automatic generation of this file does not include\n')
-    F.write('#guide or alignment stars.\n')
     F.write('#ttype1 = objID\n')
     F.write('#ttype2 = ra\n')
     F.write('#ttype3 = dec\n')

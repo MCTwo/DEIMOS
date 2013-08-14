@@ -1,4 +1,6 @@
-.reg
-.pyc
-.fits
-.txt
+*.reg
+*.pyc
+*.fits
+*.txt
+*.con
+*.tar.gz
