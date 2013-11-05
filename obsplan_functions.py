@@ -459,6 +459,41 @@ def PAround(cat,field,PAmin,PAmax,PAvalue,maskPA):
     cat[field][test]=PAvalue+maskPA
     return cat
 
+def optimalPA(H, delta, phi):
+    '''
+    Author: Will Dawson
+    This is based on:
+    Filippenko, A.V., 1982. The importance of atmospheric differential 
+    refraction in spectrophotometry. Publications of the Astronomical 
+    Society of the Pacific, 94, pp.715–721. Available at:
+    http://adsabs.harvard.edu/abs/1982PASP...94..715F.
+    
+    Input:
+    phi = [float; units=degrees] observers latitude
+    delta = [float; units=degrees] object's declination
+    H = [float; units=hours] object's hour angle
+        (H is + if west of the meridian)
+    '''
+    from math import pi,sin,cos,asin
+    pa_obj = objectPA(H,delta,phi)
+    d2r = pi/180.
+    phi *= d2r
+    if H < 0:
+        sign = -1
+        H = -H
+    else:
+        sign = 1
+    H = H*15*d2r
+    delta *= d2r
+    eta_rad = sign*asin(sin(H)*cos(phi) / 
+                        (1-(sin(phi)*sin(delta) +
+                            cos(phi)*cos(delta)*cos(H))**2)**(0.5))
+    eta_deg = eta_rad/d2r
+    
+    if sign*pa_obj < 0:
+        eta_deg = sign*(180-sign*eta_deg)
+    return eta_deg
+
 def pick_PA(cat, PA_field, box, axis_angle='deVPhi_r',plot_diag=False):
     '''
     Stability: it runs  
@@ -702,9 +737,8 @@ def return_objects_in_mask_region(cat,regfile):
     Nfin = cat.shape[0]
     Ncut = Nint - Nfin
     print 'obsplan.return_objects in mask region: '\
-           '{0} rows removed: {1} initial rows; {2} remaining rows'.format(Ncut,
-                                                                           Nint,
-                                                                           Nfin)
+           '{1}-{0} = {2} rows remaining'.format(Ncut, Nint, Nfin)
+           #'{0} rows removed: {1} initial rows; {2} remaining rows'.format(Ncut,
     print '--------------------------------------------------------'
     return cat, box 
 
