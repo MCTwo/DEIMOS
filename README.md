@@ -30,4 +30,4 @@ To do
 * make sure that the functions are flexible for different types of catalogs, i.e. not just SDSS catalogs 
 so users do not have to modify the code 
 * better documentations of the functions 
-
+* move Google Doc "How to create slitmask" to this Github as a wiki page
