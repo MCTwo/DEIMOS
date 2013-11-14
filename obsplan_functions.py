@@ -464,9 +464,9 @@ def optimalPA(H, delta, phi):
     Author: Will Dawson
     This is based on:
     Filippenko, A.V., 1982. The importance of atmospheric differential 
-    refraction in spectrophotometry. Publications of the Astronomical 
-    Society of the Pacific, 94, pp.715–721. Available at:
-    http://adsabs.harvard.edu/abs/1982PASP...94..715F.
+    refraction in spectrophotometry. Publications of the Astronomical
+    Society of the Pacific, 94, pp.715-721. Available at:
+    http://adsabs.harvard.edu/bas/1982PASP...94..715F.
     
     Input:
     phi = [float; units=degrees] observers latitude
