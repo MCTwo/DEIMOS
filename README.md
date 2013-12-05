@@ -31,3 +31,6 @@ To do
 so users do not have to modify the code 
 * better documentations of the functions 
 * move Google Doc "How to create slitmask" to this Github as a wiki page
+* implement interactive user inputs http://docs.python.org/2/library/cmd.html
+* add Dave's dsim2region python script as one of the functions so we can visualize the slitmask without IDL
+* add Dave's script for generating fits file from SDSS images as one of the functions 
