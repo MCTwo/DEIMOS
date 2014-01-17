@@ -1,6 +1,6 @@
 import pylab
 
-redshift = 0.092
+redshift = .1
 lambda_central = 6300
 
 fig = pylab.figure(figsize=(20,4.5))
@@ -19,6 +19,16 @@ pylab.plot((lcl_up,lcl_up),yl,
            '-b',alpha=0.5,linewidth=3)
 pylab.fill_between(pylab.arange(lcl_low,lcl_up+100,100),yl[0],yl[1],
                    facecolor='blue',alpha=0.25)
+#At the ends of the coverage window show the +/- range due to where the
+#slit is placed on the mask
+pylab.plot((lcl_low+411,lcl_low+411),yl,
+           '--b',alpha=0.5,linewidth=3)
+pylab.plot((lcl_low-411,lcl_low-411),yl,
+           '-.b',alpha=0.5,linewidth=3)
+pylab.plot((lcl_up+411,lcl_up+411),yl,
+           '--b',alpha=0.5,linewidth=3)
+pylab.plot((lcl_up-411,lcl_up-411),yl,
+           '-.b',alpha=0.5,linewidth=3)
 
 #Plot common spectral lines
 x_Lyb = 1025.7*(1+redshift)
