@@ -6,6 +6,7 @@ from __future__ import division
 import numpy
 import pyfits
 import tools
+import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
 ###########################
 ### USER INPUTS
@@ -20,9 +21,51 @@ objkey = 'NUMBER' #ttype name of the unique object id column
 imgcoord = ('X_WORLD','Y_WORLD') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
 outputfile = '/sandbox/deimos/ciza4A/matchcat_ciza4A_subaru.txt'
+
+### Fits image file input and mask region file
+
+# Subaru image and visulation parameters
+file_fits = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/fits/optical/Subaru/I.fits'
+
+# Define image scale
+scale = 'log' #e.g. 'linear', 'log', 'power', etc. 
+# Define (min, max) pixel scale values
+scale_limits = (0,200)
+
+# Define Subaru and HST object region files
+region = '/Users/dawson/OneDrive/Observing/Keck2013a/CIZAJ2242/ciza_m1A.reg'
+
+# this scale is divided by the object FWHM (in pixels) to determine the zoom
+# for that object
+zoom_scale = 200
+
 ###########################
 ### PROGRAM
 ###########################
+## Setup the ds9 image
+# setup ds9
+# call ds9
+d = ds9.ds9()
+# turn off colorbar
+d.set('colorbar no')
+
+# load the subaru image in the first frame
+cmd = 'file '+file_fits
+d.set(cmd)
+
+## correct the WCS issues (deleted PV1_ and PV2_ values)
+#d.set('wcs replace Subaru.wcs')
+
+# change the scale to log and apply set limits
+cmd = 'scale '+scale
+d.set(cmd)
+cmd = 'scale limits {0} {1}'.format(scale_limits[0],scale_limits[1])
+d.set(cmd)
+
+# load Subaru object regions into both frames
+cmd = 'regions load all '+region
+d.set(cmd)
+
 # Gather the basic slit info tables from the bintabs.fits file
 hdubin = pyfits.open(path+binfile)
 # Target table information, similar to dsim .lst information
@@ -33,6 +76,8 @@ tb_mask = hdubin[2].data
 tb_slits = hdubin[3].data
 # Table that maps the id's of the previous two tables
 tb_map = hdubin[4].data
+
+## Work with the zspec results files
 
 # Read in the zspec file contents
 hduzspec = pyfits.open(path+'../../'+zspecfile)
