@@ -6,6 +6,7 @@ from __future__ import division
 import numpy
 import pyfits
 import tools
+import pandas
 import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
 ###########################
@@ -88,8 +89,7 @@ tb_zspec = hduzspec[1].data
 slitnumbers = tb_slits.field('SLITNAME')
 
 # Load the image catalog
-cat_img = tools.readcatalog(imgcat)
-key_img = tools.readheader(imgcat)
+cat_img = pandas.read_csv(imgcat,header=0)
 
 #Create the ouput file and write header information
 fh = open(outputfile,'w')
@@ -112,7 +112,8 @@ fh.write('#ttype13 = mag_obj\n')
 fh.write('#ttype14 = matchdelta\n')
 fh.write('#ttype15 = comment\n')
 fh.close()
-def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
+
+def match(slit_i,which_trace,cat,coord,objkey,mag,tolerance,outputfile):
     #Filter the tables keeping only the current slit
     tb_s = tb_slits[tb_slits.field('SLITNAME')==slit_i]
     # slitid
@@ -195,26 +196,26 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     j=0
     delta = numpy.zeros(N)
     for i in range(N):
-        ra = cat_flt[i,key[coord[0]]]
-        dec = cat_flt[i,key[coord[1]]]
+        ra = cat_flt.iloc[i][coord[0]]
+        dec = cat_flt.iloc[i][coord[1]]
         delta[i] = numpy.abs(tools.angdist(ra,dec,ra_trace,dec_trace)*60**2)
         if delta[i] < tolerance:
             j+=1
     if j==1:
         #there was a single match satisfying the tolerence 
-        cat_flt = cat_flt[delta<tolerance,:]
+        cat_flt = cat_flt[delta<tolerance]
         delta = delta[delta<tolerance]
-        match_id = cat_flt[0,key[objkey]]
-        match_ra = cat_flt[0,key[coord[0]]]
-        match_dec = cat_flt[0,key[coord[1]]]
+        match_id = cat_flt.iloc[0][objkey]
+        match_ra = cat_flt.iloc[0][coord[0]]
+        match_dec = cat_flt.iloc[0][coord[1]]
         match_delta = delta[0]
-        match_mag = cat_flt[0,key[mag]]
+        match_mag = cat_flt.iloc[0][mag]
     elif j == 0:
         if numpy.size(delta) != 0:
             # sort match_delta smallest to largest
             index = numpy.argsort(delta)
             delta=delta[index]
-            cat_flt = cat_flt[index,:]
+            cat_flt = cat_flt[index]
             print 'slitcatmatch: No catalog matches were found for this trace.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
             print 'The closest objects to the trace are:'
@@ -311,7 +312,7 @@ for slit_i in slitnumbers:
         print 'slitcatmatch: There is no spec1d trace file for slit number {}'.format(slit_i)
         continue
     else:
-        match(slit_i,'primary',cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+        match(slit_i,'primary',cat_img,imgcoord,objkey,mag,tolerance,outputfile)
     
     # check if there is a serendip trace and if so then attempt to match with catalog
     # works for up to 5 serendips
@@ -322,4 +323,4 @@ for slit_i in slitnumbers:
             continue
         else:
             # the file exists, try to match the object
-            match(slit_i,'serendip{}'.format(i),cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+            match(slit_i,'serendip{}'.format(i),cat_img,imgcoord,objkey,mag,tolerance,outputfile)
