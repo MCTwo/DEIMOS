@@ -173,12 +173,12 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     ramax = slitra+slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
     decmin = slitdec-slitlen/(60.**2*2.)
     decmax = slitdec+slitlen/(60.**2*2.)
-    mask_cat_ra = numpy.logical_and(cat[key[coord[0]]]>ramin,
-                                    cat[key[coord[0]]]<ramax)
-    mask_cat_dec = numpy.logical_and(cat[key[coord[1]]]>decmin,
-                                     cat[key[coord[1]]]<decmax)
+    mask_cat_ra = numpy.logical_and(cat[:,key[coord[0]]]>ramin,
+                                    cat[:,key[coord[0]]]<ramax)
+    mask_cat_dec = numpy.logical_and(cat[:,key[coord[1]]]>decmin,
+                                     cat[:,key[coord[1]]]<decmax)
     mask = numpy.logical_and(mask_cat_ra,mask_cat_dec)
-    cat_flt = cat[mask]
+    cat_flt = cat[mask,:]
     N = numpy.shape(cat_flt)[0]
     
     # pan to the current slit
