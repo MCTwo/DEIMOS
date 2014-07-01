@@ -16,7 +16,7 @@ maskname = 'ciza1A'
 zspecfile = 'zspec.dawson.ciza1A.final.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
 # image catalog in pandas csv format with first row as the header row
-imgcat = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/catalog/SubaruCFHT_Sextractor/I_pandas.csv' #path/name of the image catalog
+imgcat = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/catalog/SubaruCFHT_Sextractor/I_ttype.txt' #path/name of the image catalog
 objkey = 'NUMBER' #ttype name of the unique object id column
 imgcoord = ('X_WORLD','Y_WORLD') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
@@ -88,8 +88,8 @@ tb_zspec = hduzspec[1].data
 slitnumbers = tb_slits.field('SLITNAME')
 
 # Load the image catalog
-cat_img = tools.readcatalog(imgcat)
-key_img = tools.readheader(imgcat)
+cat = tools.readcatalog(imgcat)
+key = tools.readheader(imgcat)
 
 #Create the ouput file and write header information
 fh = open(outputfile,'w')
@@ -173,8 +173,10 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     ramax = slitra+slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
     decmin = slitdec-slitlen/(60.**2*2.)
     decmax = slitdec+slitlen/(60.**2*2.)
-    mask_cat_ra = numpy.logical_and(cat[coord[0]]>ramin,cat[coord[0]]<ramax)
-    mask_cat_dec = numpy.logical_and(cat[coord[1]]>decmin,cat[coord[1]]<decmax)
+    mask_cat_ra = numpy.logical_and(cat[key[coord[0]]]>ramin,
+                                    cat[key[coord[0]]]<ramax)
+    mask_cat_dec = numpy.logical_and(cat[key[coord[1]]]>decmin,
+                                     cat[key[coord[1]]]<decmax)
     mask = numpy.logical_and(mask_cat_ra,mask_cat_dec)
     cat_flt = cat[mask]
     N = numpy.shape(cat_flt)[0]
@@ -234,11 +236,11 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                 match_id = match_ra = match_dec = match_delta = match_mag = -99
             elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
                 selection=int(selection)
-                match_id = cat_flt[selection,key_img[objkey]]
-                match_ra = cat_flt[selection,key_img[coord[0]]]
-                match_dec = cat_flt[selection,key_img[coord[1]]]
+                match_id = cat_flt[selection,key[objkey]]
+                match_ra = cat_flt[selection,key[coord[0]]]
+                match_dec = cat_flt[selection,key[coord[1]]]
                 match_delta = delta[selection]
-                match_mag = cat_flt[selection,key_img[mag]]
+                match_mag = cat_flt[selection,key[mag]]
         else:
             print 'slitcatmatch: No catalog matches were found for this trace.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
@@ -263,11 +265,11 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
             match_id = match_ra = match_dec = match_delta = match_mag = -99
         elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
             selection=int(selection)
-            match_id = cat_flt[selection,key_img[objkey]]
-            match_ra = cat_flt[selection,key_img[coord[0]]]
-            match_dec = cat_flt[selection,key_img[coord[1]]]
+            match_id = cat_flt[selection,key[objkey]]
+            match_ra = cat_flt[selection,key[coord[0]]]
+            match_dec = cat_flt[selection,key[coord[1]]]
             match_delta = delta[selection]
-            match_mag = cat_flt[selection,key_img[mag]]
+            match_mag = cat_flt[selection,key[mag]]
 #    print maskname
 #    print slit_i
 #    print which_trace
@@ -311,7 +313,7 @@ for slit_i in slitnumbers:
         print 'slitcatmatch: There is no spec1d trace file for slit number {}'.format(slit_i)
         continue
     else:
-        match(slit_i,'primary',cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+        match(slit_i,'primary',cat,key,imgcoord,objkey,mag,tolerance,outputfile)
     
     # check if there is a serendip trace and if so then attempt to match with catalog
     # works for up to 5 serendips
@@ -322,4 +324,4 @@ for slit_i in slitnumbers:
             continue
         else:
             # the file exists, try to match the object
-            match(slit_i,'serendip{}'.format(i),cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+            match(slit_i,'serendip{}'.format(i),cat,key,imgcoord,objkey,mag,tolerance,outputfile)
