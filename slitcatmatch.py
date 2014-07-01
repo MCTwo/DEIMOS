@@ -62,10 +62,6 @@ d.set(cmd)
 cmd = 'scale limits {0} {1}'.format(scale_limits[0],scale_limits[1])
 d.set(cmd)
 
-# load Subaru object regions into both frames
-cmd = 'regions load all '+region
-d.set(cmd)
-
 # Gather the basic slit info tables from the bintabs.fits file
 binfile = maskname+'.bintabs.fits'
 hdubin = pyfits.open(path+binfile)
@@ -181,6 +177,9 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     cat_flt = cat[mask,:]
     N = numpy.shape(cat_flt)[0]
     
+    # load slitmask regions
+    cmd = 'regions load all '+region
+    d.set(cmd)        
     # pan to the current slit
     cmd = 'pan to {0} {1} wcs fk5 degrees'.format(slitra,slitdec)
     d.set(cmd)
@@ -224,7 +223,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
             for k in range(numpy.size(delta)):
                 print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
                 #display a region at the object's location, with label
-                cmd = '"fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text{'+'{0}'.format(k)+'}"'
+                cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
                 d.set('regions', cmd)
                 
             print '{0}\tSelect none.'.format(numpy.size(delta))
@@ -254,7 +253,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
         for k in range(j):
             print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
             #display a region at the object's location, with label
-            cmd = '"fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text{'+'{0}'.format(k)+'}"'
+            cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
             d.set('regions', cmd)            
         print '{0}\tSelect none.'.format(j)
         selection = raw_input('Enter the number of the correct match: ')
@@ -280,6 +279,10 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
 #    print match_ra
 #    print match_dec
 #    print match_delta
+
+    #delete all the regions
+    cmd = 'regions delete all'
+    d.set(cmd)    
 
     fh = open(outputfile,'a')
     fh.write('{0:0.0f}\t{1:0.6f}\t{2}\t{3:0.0f}\t{4}\t{5:03d}\t{6}\t{7:0.1f}\t{8:0.6f}\t{9:0.5f}\t{10:0.0f}\t{11:0.6f}\t{12:0.5f}\t{13:0.2f}\t{14}\n'.format(obj,z,zerr,quality,maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,match_id,match_ra,match_dec,match_delta,slitcomment))
