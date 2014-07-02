@@ -291,7 +291,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     d.set(cmd)    
 
     fh = open(outputfile,'a')
-    fh.write('{0}\t{1:0.6f}\t{2}\t{3:0.0f}\t{4}\t{5}\t{6}\t{7:0.1f}\t{8:0.6f}\t{9:0.5f}\t{10:0.0f}\t{11:0.6f}\t{12:0.5f}\t{13:0.2f}\t{14}\n'.format(obj,z,zerr,quality,maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,match_id,match_ra,match_dec,match_delta,slitcomment))
+    fh.write('{0}\t{1:0.6f}\t{2}\t{3:0.0f}\t{4}\t{5}\t{6}\t{7:0.1f}\t{8:0.6f}\t{9:0.5f}\t{10:0.0f}\t{11:0.6f}\t{12:0.5f}\t{13:0.2f}\t"{14}"\n'.format(obj,z,zerr,quality,maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,match_id,match_ra,match_dec,match_delta,slitcomment))
     fh.close()
     
 # Analyze each trace for all slits and associate with photometric object
@@ -334,3 +334,4 @@ for slit_i in slitnumbers:
         else:
             # the file exists, try to match the object
             match(slit_i,'serendip{}'.format(i),cat,key,imgcoord,objkey,mag,tolerance,outputfile)
+print 'slitcatmatch complete'
