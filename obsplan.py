@@ -436,7 +436,18 @@ def plotcoverage(redshift,lambda_central,filename=None):
                '-b',alpha=0.5,linewidth=3)
     pylab.fill_between(pylab.arange(lcl_low,lcl_up+100,100),yl[0],yl[1],
                        facecolor='blue',alpha=0.25)
-    
+
+    #At the ends of the coverage window show the +/- range due to where the
+    #slit is placed on the mask
+    pylab.plot((lcl_low+411,lcl_low+411),yl,
+               '--b',alpha=0.5,linewidth=3)
+    pylab.plot((lcl_low-411,lcl_low-411),yl,
+               '-.b',alpha=0.5,linewidth=3)
+    pylab.plot((lcl_up+411,lcl_up+411),yl,
+               '--b',alpha=0.5,linewidth=3)
+    pylab.plot((lcl_up-411,lcl_up-411),yl,
+               '-.b',alpha=0.5,linewidth=3)    
+
     #Plot common spectral lines
     x_Lyb = 1025.7*(1+redshift)
     x_Lya = 1215.7*(1+redshift)
@@ -489,9 +500,9 @@ def plotcoverage(redshift,lambda_central,filename=None):
     
     labeloff = 0.5
     pylab.text(lambda_central, labeloff*(yl[0]+yl[1]),
-               '$\lambda_{central}$'+'={0}'.format(lambda_central), 
+               '$\lambda_\mathrm{central}$'+'={0}'.format(lambda_central), 
                horizontalalignment='right',verticalalignment='center', 
-               rotation='vertical')
+               rotation='vertical',fontsize=16)
     
     if x_Lyb > xl[0] and x_Lyb < xl[1]:    
         pylab.text(x_Lyb, labeloff*(yl[0]+yl[1]), 'Ly-beta', horizontalalignment='right',verticalalignment='center', rotation='vertical')
@@ -543,7 +554,7 @@ def plotcoverage(redshift,lambda_central,filename=None):
     pylab.xlim(xl)
     frame1 = pylab.gca()
     frame1.axes.get_yaxis().set_visible(False)
-    pylab.xlabel('$\lambda_{observed}$',fontsize=14)
+    pylab.xlabel('$\lambda_{observed}$',fontsize=18)
     if filename:
         pylab.savefig(filename)
     pylab.show()    
