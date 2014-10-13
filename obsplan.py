@@ -421,7 +421,7 @@ def plotcoverage(redshift,lambda_central,filename=None):
     -- if filename given will save figure as a png file
     '''
     fig = pylab.figure(figsize=(20,4.5))
-    pylab.xlim((lambda_central-2300, lambda_central+2300))
+    pylab.xlim((4900, 8500))
     xl = pylab.xlim()
     yl = (0,1)
     
@@ -500,61 +500,44 @@ def plotcoverage(redshift,lambda_central,filename=None):
     
     labeloff = 0.5
     pylab.text(lambda_central, labeloff*(yl[0]+yl[1]),
-               '$\lambda_\mathrm{central}$'+'={0}'.format(lambda_central), 
+               '$\lambda_\mathrm{central}=6700$', 
                horizontalalignment='right',verticalalignment='center', 
-               rotation='vertical',fontsize=16)
-    
-    if x_Lyb > xl[0] and x_Lyb < xl[1]:    
-        pylab.text(x_Lyb, labeloff*(yl[0]+yl[1]), 'Ly-beta', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_Lya > xl[0] and x_Lya < xl[1]:    
-        pylab.text(x_Lya, labeloff*(yl[0]+yl[1]), 'Ly-alpha', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_CIV > xl[0] and x_CIV < xl[1]:    
-        pylab.text(x_CIV, labeloff*(yl[0]+yl[1]), 'C IV', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_AlIII > xl[0] and x_AlIII < xl[1]:    
-        pylab.text(x_AlIII, labeloff*(yl[0]+yl[1]), 'Al III', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_FeII > xl[0] and x_FeII < xl[1]:    
-        pylab.text(x_FeII, labeloff*(yl[0]+yl[1]), 'Fe II', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_MgII > xl[0] and x_MgII < xl[1]:    
-        pylab.text(x_MgII, labeloff*(yl[0]+yl[1]), 'Mg II', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_MgI > xl[0] and x_MgI < xl[1]:    
-        pylab.text(x_MgI, labeloff*(yl[0]+yl[1]), 'Mg I', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_OII > xl[0] and x_OII < xl[1]:    
-        pylab.text(x_OII, labeloff*(yl[0]+yl[1]), '[O II]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_CalK > xl[0] and x_CalK < xl[1]:    
-        pylab.text(x_CalK, labeloff*(yl[0]+yl[1]), 'Cal K', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_CalH > xl[0] and x_CalH < xl[1]:    
-        pylab.text(x_CalH, labeloff*(yl[0]+yl[1]), 'Cal H', horizontalalignment='right',verticalalignment='center', rotation='vertical')
-    if x_Hd > xl[0] and x_Hd < xl[1]:    
-        pylab.text(x_Hd, labeloff*(yl[0]+yl[1]), 'Hd', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+               rotation='vertical',fontsize=20)
+    fonts = 18
     if x_Gband > xl[0] and x_Gband < xl[1]:    
-        pylab.text(x_Gband, labeloff*(yl[0]+yl[1]), 'G-band', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_Gband, (labeloff-0.15)*(yl[0]+yl[1]), 'G-band', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_Hg > xl[0] and x_Hg < xl[1]:    
-        pylab.text(x_Hg, labeloff*(yl[0]+yl[1]), 'Hg', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_Hg, (labeloff+0.15)*(yl[0]+yl[1]), r'$\mathrm{H}\gamma$', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts+2)
     if x_Hb > xl[0] and x_Hb < xl[1]:    
-        pylab.text(x_Hb, labeloff*(yl[0]+yl[1]), 'Hb', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_Hb, labeloff*(yl[0]+yl[1]), r'$\mathrm{H}\beta$', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts+2)
     if x_OIII_1 > xl[0] and x_OIII_1 < xl[1]:    
-        pylab.text(x_OIII_1, labeloff*(yl[0]+yl[1]), '[OIII]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_OIII_1, labeloff*(yl[0]+yl[1]), '[OIII]', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_OIII_2 > xl[0] and x_OIII_2 < xl[1]:    
-        pylab.text(x_OIII_2, labeloff*(yl[0]+yl[1]), '[OIII]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_OIII_2, labeloff*(yl[0]+yl[1]), '[OIII]', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_Mgb > xl[0] and x_Mgb < xl[1]:    
-        pylab.text(x_Mgb, labeloff*(yl[0]+yl[1]), 'Mg I(b)', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_Mgb, labeloff*(yl[0]+yl[1]), 'Mg I(b)', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_FeI > xl[0] and x_FeI < xl[1]:    
-        pylab.text(x_FeI, labeloff*(yl[0]+yl[1]), 'Fe I', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_FeI, labeloff*(yl[0]+yl[1]), 'Fe I', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_NaD > xl[0] and x_NaD < xl[1]:    
-        pylab.text(x_NaD, labeloff*(yl[0]+yl[1]), 'Na I (D)', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_NaD, labeloff*(yl[0]+yl[1]), 'Na I (D)', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_NII_1 > xl[0] and x_NII_1 < xl[1]:    
-        pylab.text(x_NII_1, (labeloff-0.1)*(yl[0]+yl[1]), '[NII]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_NII_1, (labeloff-0.2)*(yl[0]+yl[1]), '[NII]', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_Ha > xl[0] and x_Ha < xl[1]:    
-        pylab.text(x_Ha, labeloff*(yl[0]+yl[1]), 'Ha', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_Ha, labeloff*(yl[0]+yl[1]), r'$\mathrm{H}\alpha$', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts+2)
     if x_NII_2 > xl[0] and x_NII_2 < xl[1]:    
-        pylab.text(x_NII_2, (labeloff+0.1)*(yl[0]+yl[1]), '[NII]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_NII_2, (labeloff+0.2)*(yl[0]+yl[1]), '[NII]', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     if x_SII > xl[0] and x_SII < xl[1]:    
-        pylab.text(x_SII, labeloff*(yl[0]+yl[1]), '[SII]', horizontalalignment='right',verticalalignment='center', rotation='vertical')
+        pylab.text(x_SII, labeloff*(yl[0]+yl[1]), '[SII]', horizontalalignment='right',verticalalignment='center', rotation='vertical',fontsize=fonts)
     
     pylab.xlim(xl)
     frame1 = pylab.gca()
     frame1.axes.get_yaxis().set_visible(False)
-    pylab.xlabel('$\lambda_{observed}$',fontsize=18)
+    pylab.xlabel('$\lambda_{observed}\,[\AA]$',fontsize=22)
+    for tick in frame1.xaxis.get_major_ticks():
+        tick.label1.set_fontsize(14)
+    #frame1.axes.get_yaxis().set_visible(False)
+    for tick in frame1.yaxis.get_major_ticks():
+        tick.label1.set_fontsize(14)
     if filename:
-        pylab.savefig(filename)
+        pylab.savefig(filename,bbox_inches='tight')
     pylab.show()    
