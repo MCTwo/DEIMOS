@@ -1,0 +1,39 @@
+# To remake different flavours:
+
+# SSUN:
+mkpkg ssun	# arch = linux, ssun, etc
+
+cd cfitsio
+del libcfitsio.a
+!ln -s lib.ssun/libcfitsio.a libcfitsio.a
+cd deimos$
+
+mkpkg -p deimos
+
+
+
+# LINUX:
+mkpkg linux	# arch = linux, ssun, etc
+
+cd cfitsio
+del libcfitsio.a
+!ln -s lib.redhat/libcfitsio.a libcfitsio.a
+cd deimos$
+
+mkpkg -p deimos
+
+
+# MACOSX:
+mkpkg macosx	# arch = linux, ssun, etc
+
+cd cfitsio
+del libcfitsio.a
+!ln -s lib.macosx/libcfitsio.a libcfitsio.a
+cd deimos$
+
+mkpkg -p deimos
+
+############################################################
+# To make tarfile
+
+!tar -cvf /d/deimos_rev0a.tar .

@@ -1,0 +1,14 @@
+outfile= 'superdark.2003jun30.g600.fits'
+header=headfits('superdark.2003jun06.g600.fits.gz')
+   mwrfits, junk, outfile, header,/create ;dummy primary
+
+for i=1,8 do begin &$
+	data=mrdfits('superdark.2003jun06.g600.fits.gz',i,header) &$
+	if i eq 5 then begin &$
+	   mask=data*0 & mask[1640:1800,*]=1 &$
+	   data=djs_maskinterp(data,mask,iaxis=0) &$
+	endif &$
+	mwrfits,data,outfile,header &$
+endfor
+
+spawn,'gzip '+outfile

@@ -1,0 +1,39 @@
+; Some notes on converting the spec1d templates to actual 1d spectra that can be plotted
+
+h = headfits('spEigenStarDeep2.fits')
+print, h
+
+Will give the list of stars in the template...in a weird format, it is like a 9x~2000 array
+where each row is a different star. So, got to cut of the star you want.
+
+; These lines are copied from zfind.pro or one of those programs...
+
+thisfile = 'spEigenStarDeep2.fits'
+starflux = readfits(thisfile, shdr, /SILENT)
+starloglam0 = sxpar(shdr, 'COEFF0')
+stardloglam = double(sxpar(shdr, 'COEFF1'))
+npoints = n_elements(starflux[*, 0])
+
+starloglam = findgen(npoints)*stardloglam + starloglam0
+nstars = (size(starflux, /dimen))[1]
+print, nstars
+
+; should get 9 for the star eigenfile and 3 for the spDEEP.fits file
+; The actual eigenvalues that come up in zspec are the three that are in 
+; the spDEEP.fits file. The first row is some linear combination of the 
+; stellar templates of F and later stars in the spEigenStarDEEP2.fits file.
+; The second row is emission line spectrum (taken from SDSS I'm guessing) and
+; the third row is the A star template from the spEigenStarDEEP2.fits file. 
+
+reglam = 10^starloglam	;to go to regular (linear) lambda space
+result = {lambda:reglam, spec:starflux[*,4]}
+mwrfits, result, 'spec1d.G0star.fromSDSS.blemaux.fits'
+
+; and can do this for whatever star
+
+result = {lambda:reglam, spec:starflux[*,0]}
+mwrfits, result, 'spec1d.Astar.fromSDSS.blemaux.fits'
+
+etc...
+
+

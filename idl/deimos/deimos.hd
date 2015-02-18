@@ -1,0 +1,5 @@
+# Help directory for the DEIMOS package.
+
+$defdir		= "deimos$src/"
+$doc		= "deimos$doc/"
+

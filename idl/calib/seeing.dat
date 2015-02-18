@@ -1,0 +1,131 @@
+#mask number	date observed	seeing(")	flag field
+#----------------------------------------------------------
+#
+# commissioning data
+# 2002jun14
+2101		2002jun14	1.0
+1145		2002jun14	1.0
+#---------------------------------------------------------------------
+# august data (science nights and comissioning nights)
+# 2002aug09
+# day before actual DEEP2 run, no science frames taken.
+# 2002aug10
+# M31 observations.
+3243		2002aug10	1.0
+# 2002aug11
+# tv guider problems; used as commissioning time.
+# 2002aug12
+# more tv guider issues; again used as commissioning time.
+# 2002aug13
+3206		2002aug13	1.0
+3243		2002aug13	1.0
+4243		2002aug13	1.0
+2200		2002aug13	1.0
+2240		2002aug13	1.0
+3203		2002aug13	1.0
+# 2002aug14
+# cloudy all night.
+# 2002aug27
+2243		2002aug27	1.0
+#---------------------------------------------------------------------
+# september data (science nights and comissioning nights)
+# 2002sep08
+2246		2002sep08	0.6
+2249		2002sep08	0.7
+3207		2002sep08	0.7
+3246		2002sep08	0.85		
+3249		2002sep08	0.85
+4201		2002sep08	0.7		#buckled_mask
+4241		2002sep08	0.6
+# 2002sep09
+2252		2002sep09	0.7		
+2255		2002sep09	0.7
+3210		2002sep09	0.7
+3252		2002sep09	0.7
+3255		2002sep09	0.7
+4204		2002sep09	0.7
+4244		2002sep09	0.7
+4246		2002sep09	0.7
+# 2002sep10
+2258		2002sep10	0.6
+2280		2002sep10	0.8		#at high-airmass
+3247		2002sep10	0.6
+3281		2002sep10	0.6
+4206		2002sep10	0.6
+4249		2002sep10	0.6
+4252		2002sep10	0.6
+# 2002sep11
+2241		2002sep11	0.6
+3201		2002sep11	0.64		#cirrus
+3241		2002sep11	0.8
+3244		2002sep11	0.58
+4209		2002sep11	0.6		#clouds
+4255		2002sep11	0.6
+4280		2002sep11	0.6
+# 2002sep14
+4212		2002sep14	0.45
+4250		2002sep14	0.54
+3280		2002sep14	0.5 
+# 2002sep15
+# cluster CL0024 observed.
+4253		2002sep15	0.6
+4215		2002sep15	0.6
+#4215 also observed on 2002sep14 (1 frame @ 0.5" seeing)
+#4215 also observed on 2002sep17 (1 frame @ 0.6" seeing)		
+# 2002sep16
+# cluster CL0024 observed.
+3281		2002sep16	0.6
+4256		2002sep16	0.6
+4205		2002sep16	0.6
+# 2002sep17
+4208		2002sep17	0.6
+4281		2002sep17	0.6
+4202		2002sep17	0.6
+#4202 also observed on 2002sep16 (1 frame @ 0.6" seeing)
+#---------------------------------------------------------------------
+# october data (science nights and comissioning nights)
+# 2002oct03
+3202		2002oct03	0.7
+3242		2002oct03	1.0
+3242		2002oct03b	0.7		
+#possible chip 2 problems with 3242(b)
+4207		2002oct03	0.6
+4210		2002oct03	0.8
+4242		2002oct03	0.7
+4245		2002oct03	0.8
+# 2002oct04
+# bright star observations
+#3205 observed but data is likely bad....as jeff.
+#4211 and 4248 observed; data is bad due to clouds.
+# 2002oct05
+#cloudy
+# 2002oct06
+3205		2002oct06	0.6
+3208		2002oct06	0.8
+3248		2002oct06	0.6
+3250		2002oct06	0.6
+4211		2002oct06	0.7
+4213		2002oct06	0.9
+4248		2002oct06	0.7
+#4248 also observed on 2002oct13 (2 frames @ 0.6" seeing)
+# 2002oct11
+3251		2002oct11	0.75
+4251		2002oct11	0.7
+4254		2002oct11	0.7
+4214		2002oct11	0.7
+4216		2002oct11	0.7
+# 2002oct12
+4240		2002oct12	0.6
+4257		2002cot12	0.6
+#4257 also observed on 2002oct11 (1 frame @ 0.7" seeing)
+4200		2002oct12	0.6
+4217		2002oct12	0.6		
+#exptime =1600 for frame d1012_0132 of mask 4217
+# 2002oct13
+3209		2002oct13	0.6
+4219		2002oct13	0.6		
+#only 1 science frame taken for 4219
+
+
+
+

@@ -1,0 +1,146 @@
+from dcshad, we find the center of Surf 18 (body 4) should be projected to
+
+  -5.364    0.971 mm  (DEIMOS x,y)
+
+and the center of surf 22 (dewar window) should be at:
+
+  -0.264    0.048 mm  (DEIMOS x,y)
+
+Note that the actual shadow cast by surf 22 is _not_ at the window but is
+further back, but only by a small amount in the undercut corners.
+
+In IMAGE ICS (display coords), this should be:
+357.6,-64.7   px (Body 4)
+ 17.6, -3.2   px (Dewar window)
+
+However, the center of Body 4 seems to lie at about 330,10 px
+
+
+Edge shadow:
+From dec06.6220, edges at (xlate used to produce [X,Y]ics):
+
+  xobs    yobs                       Xics     Yics
+982.000  10.000   934.0,  10.0,1   -3297.80 -4112.02
+550.500 400.000   502.5, 400.0,1   -3730.91 -3723.81
+193.300 800.000   145.3, 800.0,1   -4089.76 -3325.29
+7345.20  10.000  1153.2,  10.0,4   3341.528 -4081.52
+7770.80 400.000  1578.8, 400.0,4   3767.925 -3692.39
+8124.70 800.000  1932.7, 800.0,4   4122.644 -3293.12
+172.700 7350.00   124.7,3254.0,5   -4139.33 3271.873
+524.500 7750.00   476.5,3654.0,5   -3788.57 3672.788
+996.900 8180.00   948.9,4084.0,5   -3317.30 4104.018
+8139.60 7350.00  1947.6,3254.0,8   4116.045 3308.338
+7783.10 7750.00  1591.1,3654.0,8   3759.620 3708.404
+7303.50 8180.00  1111.5,4084.0,8   3280.100 4138.494
+
+These have a center at (3.05,3.86) 
+
+
+BODY 4 Outer Ring (12-04,sci.1024 PA=-90, long exp, small pinhole):
+4078.00 4410.00  1982.0, 314.0,6   -116.170  330.581
+3983.00 4122.00  1887.0,  26.0,6   -209.875   42.157
+4002.00 4044.00  1906.0,4044.0,2   -199.495  -77.615
+4085.00 3845.00  1989.0,3845.0,2   -115.983 -276.400
+4213.00 3641.00    69.0,3641.0,3    112.600 -463.000
+4684.00 3660.00   540.0,3660.0,3    583.600 -444.000
+4958.00 4066.00   814.0,4066.0,3    857.600  -38.000
+4298.00 4605.00   154.0, 509.0,7    176.211  540.893
+4772.00 4502.00   628.0, 406.0,7    650.279  438.208
+4908.00 4341.00   764.0, 245.0,7    786.386  277.298
+
+(Approx center 323,25; confirmed with visual insp on chip 3 (325.6,-8) and
+chip 7 (322.5 33) of small inner ring, where the Y positions are for the chip
+edge.  About 28 px more of the ring is seen on Chip 7; implying the same
+point on Chip 3 would be -8+28=20, and then the average is 27. Errors of
++/- 3 px probably reasonable here)  (Note that ring locations are sometimes
+poorly defined; some features seem to shift relative to others, so errors
+in the calculated ring center is probably of order +/- 2px
+
+
+
+These are _badly_ inconsistent, because the sense of Body 4 wrt window shadow
+is _reversed_ -- this implies we do NOT have the correct location for the
+pinhole ...
+
+Ah ha! Vern has recalculated the pinhole X,Y to different values; now get:
+
+Body 4	350.7 13.0 px
+Surf22   17.3  0.6 px
+
+For completeness, there's the "large pinhole" corrected values, which give:
+
+Body 4 	367.9 -4.2
+Surf22	 18.1 -0.2
+
+This last is less consistent.  However, we must now accept the fact that the
+the actual "stop"  is even closer to the detector than we have been using.
+Moving in by 0.1 in:
+
+surf 16:	367.9    -4.2 px   (no change; surf unmodified)
+surf 23:	 11.1    -0.1  px  (surf 24 is now detector)
+
+For original pinhole location (correct for body 4):
+
+Body 4	350.7 13.0 px (no change)
+surf23:	 10.6  0.4 px
+
+Conclusion:
+-- Introducing the offset (large) pinhole produces an effect <= 0.5px for the
+dewar "stop" ie negligible.  Therefore, use small pinhole location, which is
+appropriate for Surface 16 circles.
+-- However, as expected, moving the stop closer to the detector does have a
+large effect, 0.005 in.  How thick is this, really? I believe 1/16 in
+(NEED TO VERIFY) plus some shim thickness; adopt 0.08in.
+
+
+The "final" values are then (ignoring possible Body 4 decenter and flexure):
+
+Surf 16:	350.7    13.0 px
+Surf 23:	 11.9     0.4 px
+
+(Flexure introduces about 1px motion in Surf 16.  Decenter would be more,
+approx 1.7px (0.001") * projection magnification, per thou decenter)
+
+Now, the _difference_ between these 2 should match those observed for
+consistency check:
+
+predicted:   338.8  12.6
+observed:    320    21
+
+The observed errors are probably +/-3 px total.  Thus there are still some
+descrepancies between the model and observations.  However, the general angles
+in the model must be close, because the predicted differences and locations
+are close.  The differences can be brought into agreement of the pinhole
+is located at (-0.8,+0.3)mm wrt its calculated position, and at the location
+the shadow stop moves only (-0.6,+0.3) px in location -- again, very small.
+Thus, the stop shadow should do very well in locating the mosaic center.
+
+
+
+to recap:  The shadow stop is centered at ICS:      11.9  0.4 px  (model)
+but is observed by the mosaic at 3.1,3.9 px.
+
+Measurement errors in this are small, < 1= px;  modeling uncertainties
+are probably <1 px.  Thus, to quote 2px in each coordinate is probably
+conservative.
+
+This means the individual gaps on Chip 3 are wider by 8.8px and 3.5px
+compared to nominal. Alternatively, the xopt, yopt values should be -8.8, +3.5.
+
+
+To turn this into a physically measureable quantity:
+The physical inner corner of Chip 3 should be at: 0.5mm+0.132=0.632 (x)
+and 0.05+0.053= 0.103mm (y).
+
+Errors: 2px = 0.03mm
+
+
+OK THE WHOLE THING REDONE AFTER FIXING THE CCD CENTER THING ...
+
+Dewar shadow stop OBSERVED at x=2.58 y=3.04 px; same model.
+
+x: 8.8 --> 9.3 px
+y: 3.5 --> 2.6 px
+
+This means: x_opt=-9.3, y_opt=2.6
+Chip 3 Phys. corner at:  0.640,0.089 mm

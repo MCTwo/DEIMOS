@@ -1,0 +1,13 @@
+outfile= 'superdark.2003jun30.g900.fits'
+outfile2 = 'superdark.2003jun30.g831.fits'
+header=headfits('superdark.2003jan03.g900.fits.gz')
+   mwrfits, junk, outfile, header,/create ;dummy primary
+   mwrfits, junk, outfile2, header,/create ;dummy primary
+
+for i=1,8 do begin &$
+	header=headfits('superdark.2003jan03.g900.fits.gz',ext=i) &$
+	mwrfits,fltarr(2048,4096),outfile,header &$
+	mwrfits,fltarr(2048,4096),outfile2,header &$
+endfor
+
+spawn,'gzip '+outfile

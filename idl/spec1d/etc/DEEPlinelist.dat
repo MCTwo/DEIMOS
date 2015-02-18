@@ -1,0 +1,22 @@
+# Lines with lambda greater than 5700A are reduced in strength by a factor of 2
+# N.B. These are air wavelengths
+#        name	    lambda    rest width (1" slit, obs. at 7800A ) fvalue
+  [O_II]_3725	 3726.032        .8	   0.87706
+  [O_II]_3727    3728.815        .8	   1.14018
+        H_eta    3835.384        .8        0.04000
+       Ne_III    3869.06         .8        0.12000
+       H_zeta    3889.049        .8        0.11000
+    H_epsilon    3970.072        .8        0.07000
+      H_delta    4101.734        .8        0.17000
+      H_gamma    4340.464        .9        0.36000
+       H_beta    4861.3250	  1.0	   0.83000
+ [O_III]_4959    4958.9110        1.0	   0.51667
+ [O_III]_5007    5006.8430        1.0	   1.55000
+	 He_I	 5875.6200	  1.2	   0.07000
+	  O_I	 6300.304	  1.3	   0.13000
+  [N_II]_6548    6548.04	  1.45	   0.16667
+      H_alpha    6562.801	  1.45     2.50000
+  [N_II]_6583    6583.46	  1.45	   0.50000
+  [S_II]_6716    6716.44	  1.45	   0.50000
+  [S_II]_6730    6730.81	  1.45     0.43500
+# Ne III is a bit uncertain

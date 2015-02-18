@@ -1,0 +1,4 @@
+Various package wide files belong in this directory, for example, global
+include files.  Keystroke help files should go in the KEYS (formerly src)
+subdirectory.
+The package `helpdb.mip' file  will end up here, too.

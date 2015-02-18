@@ -1,0 +1,8 @@
+# Root task entry for the DEIMOS package help tree.  Defines `deimos'
+# as both a task and a package in the deimos help database.
+
+deimos	men  = deimos$deimos.men,
+		hlp  = deimos$deimos.men,
+		sys  = deimos$deimos.hlp,
+		pkg  = deimos$deimos.hd,
+		src  = deimos$deimos.cl

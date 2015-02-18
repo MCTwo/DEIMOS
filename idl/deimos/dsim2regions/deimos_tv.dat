@@ -1,0 +1,22 @@
+# Name: 
+#	deimos_tv.dat
+#
+# Author: 
+#	Adapted by Gregory D. Wirth (WMKO) from file foc_plane.dat
+#	by A. C. Phillips (UCO/Lick)
+# 
+# Description: 
+#	Outline of DEIMOS TV field of view in focal plane coordinates.
+#	Smaller reectangle is pickoff mirror FOV, larger is FOV
+#	reflected off slitmask.
+#
+# Units:
+#	arcsec
+#------------------------------------------------------------------------
+  -1.  298.4
+ 208.  302.7
+ 208.   94.
+  -1.   94.
+  -1.  298.4
+  -1.  174. 
+ 208.  174. 

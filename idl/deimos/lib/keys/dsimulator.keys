@@ -1,0 +1,32 @@
+DSIMULATOR Command Summary:
+ 
+     hjkl     translate mask (1" x speed) in the usual vi ways
+     p/n      rotate mask (1 deg x speed) in a Pos/Neg sense
+      .       cycle through speeds (10, 1, 0.1) for pnhjkl keys
+      z       zoom (by abs factor; also 0 reset, -1,...,-5 for CCD1-4,TV fields)
+      a       Add a target
+      d       Delete a target
+      r       Redraw
+      i       Clear (initialize) the list of ALL selected objects
+      s       Select workable set of objects
+      t       toggle a star between Alignment and Guide pcodes
+      g       generate slits to go over selected targets.
+   <space>    print input line of nearest object
+      ?       print this list
+      q       quit
+      I       interrupt task immediately
+
+Not yet implemented:
+      c       move field Center to cursor position
+
+  also missing: labeling; binding; editing slits; etc. etc
+
+
+DSIMULATOR News:
+(in development)
+Normal operation:
+1. align field (use p/n for rotation, hjkl for translation; also '.')
+2. 'a'dd alignment stars
+3. (auto-)'s'elect working set of objects
+4. 'g'enerate slitlets
+5. 'q'uit

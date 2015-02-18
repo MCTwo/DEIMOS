@@ -1,0 +1,93 @@
+v1_1_1 (March 31, 2005)
+- modified emission line template to fix some bad wavelengths
+- improvements to coadd_spectra
+- skytweak code added - uses cross-correlation vs. fulbright & osterbrock sky spectrum to refine wavelength solution
+
+
+v1_0_9 (July 11, 2003)
+- modifications to zspec including marking of the spectral features in
+the 2-d (ATV) display.
+- revised reduce1d so that the /boxsprof 1-d extractions are employed
+for the KTRS masks. This has been done since the spec2d code has yet
+to implement a atmospheric dispersion correction.
+- modified AGN z-finding so that reduce1d returns 10 redshifts: 5
+Galaxy, 3 Stars, 2 AGN. The star and galaxy results are sorted in
+rchi2 space and then the AGN results are tacked on the end. That
+is,the AGN z values are forced to 9th and 10th best.
+
+
+v1_0_8 (June 12, 2003)
+- added AGN templates and AGN z-finding code (zfind_qso.pro).
+- modified reduce1d to return the top 5 GALAXY z's, top 2 AGN z's, and
+top 3 STAR z's. 
+- fixed bug related to subtracting off of the object and template
+continuum. an IDL "NOT" command was being employed incorrectly. 
+- improved speed of code by reducing the number of times that the
+continuum is subtracted from object spectrum.
+
+v1_0_7 (May 25, 2003) 
+- added additional fields to the zresult output structure including
+the MJD (as a DOUBLE). also removed the "ccomment" field.
+
+v1_0_6 (May 21, 2003) 
+- error made in tagging the package. skipping this version number.
+
+v1_0_5 (May 7, 2003)
+- consolidated all definitions of the zresult structure by
+implementing a new routine named zresult__define.pro which uses the
+IDL standard means for defining a structure. 
+- added new routine called zspec.pro which replaces the pspec2.pro
+code for interactively inspecting redshifts. 
+- velocity dispersion measurements are now performed using the boxcar
+extractions rather than the optimal extractions. 
+- removed rotation curve code from the spec1d pipeline. it now runs
+after a redshift catalog has been constructed.
+
+v1_0_4 (April 10, 2003) 
+- fixed some slitpa/maskpa bugs, and improved carryover of FITS
+  keywords to zresult files
+
+v1_0_3 (April 7, 2003)
+
+Changes in spec1d:
+
+- added stellar templates to z-finding code. now code picks ten best
+galaxy redshifts and ten best stellar redshift values. tags CLASS
+and SUBLCASS now utilized in zresult structure.
+
+- added UV absorption features to galaxy template??? Fe and Mg lines.
+
+- code to measure rotation curves for each object has been developed
+and incorporated into the spec1d pipeline.
+
+- modifications were made so that redshifts are measured for all
+non-local sky extractions. the output is written to the zresult
+file as HDU 3 and 4 using the same format as the first 2 HDU's.
+
+- AIRTOVAC is properly used!
+
+
+----------------------------------------------------------
+v1_0 (November 7, 2002)
+
+Recent additions:
+
+- code to reject as unphysical the solutions which are dominated by negative
+eigenvalues.
+- much refined pspec2 for checking quality of redshifts
+- major speedup of code by removing continuum before the x-corr step. 
+We now use a 2500-pixel running median for baseline removal of both 
+template and object.
+- tags in zresult structure for capturing comments and canned-comments from 
+pspec2 session.
+
+Currently pending:
+- Classification of 'class' and 'subclass' according to which template gives 
+minimum chisqr.  Should include stellar classification when appropriate
+- Tracing rotation curves of emission lines.  Will tabulate z,sigma, and 
+intensity as a function of spatial offset.
+- Comparison to stellar templates at minimal redshift to improve
+star/galaxy discrimination
+- Creation of a template with UV absorption lines?
+
+

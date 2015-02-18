@@ -1,0 +1,5 @@
+# Root help directory for the DEIMOS packages.  This dummy package is
+# needed to have `deimos' appear as a module in some package, so that
+# the user can type "help deimos" (with `deimos' given as a task).
+
+_deimos	pkg = deimos$lib/rootdeimos.hd

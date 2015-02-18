@@ -1,0 +1,12 @@
+Only the cfitsio library has been retained here.
+
+Must point to the correct flavor, eg,
+
+!ln -s lib.redhat/libcfitsio.a libcfitsio.a
+!ln -s lib.ssun/libcfitsio.a libcfitsio.a
+!ln -s lib.macosx/libcfitsio.a libcfitsio.a
+!ln -s lib.macintel/libcfitsio.a libcfitsio.a
+
+#
+# Also, if rebuild done, need to copy into the correct directory from:
+# /net/babar/dsk/raid4/phillips/celeste/u/iraf/deimos/cfitsio/lib.ARCH/libcfitsio.a

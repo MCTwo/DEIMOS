@@ -1,0 +1,12 @@
+wave,r,h,,,,"wavelength to trace (A)"
+xpix,r,h,,,,"X-pix coo"
+ypix,r,h,,,,"Y-pix coo"
+mu,r,h,,,,"Grating tilt (deg)"
+o3,r,h,,,,"3rd yaw angle (deg)"
+roll3,r,h,,,,"Grating roll"
+gmm,r,h,900.,,,"grooves/mm"
+norder,i,h,1,,,"grating order"
+amap,f,h,,,,"REV Output file mask<-->alpha mapping"
+bmap,f,h,,,,"REV Output file beta<-->ICS mapping"
+grid,b,h,no,,,"output grid (hardcoded values)"
+mode,s,h,"ql",,,

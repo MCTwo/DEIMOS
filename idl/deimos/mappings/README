@@ -1,0 +1,13 @@
+This directory contains various mappings used by qmodel and dsimulator.
+This include:
+
+xproj.map:	Projection of constant slit spacing onto the sky
+tvmirr.map:	mapping of arcsec on sky to pixel on TV for mirror region
+tvmask.map:	mapping of arcsec on sky to pixel on TV for slitmask region
+
+See deimos$cam_ast/..
+See deimos$test/spec_over/jul02/
+
+Set up with links:
+ln -s xproj1200 xproj.map
+ln -s xproj900 xproj.map
