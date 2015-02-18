@@ -57,17 +57,22 @@ So, to make the initial slitcat, open the "bintabs" file in the reduction direct
 
 Then create the slitcat:
 
-> openw, lun, 'XXXslits.cat', /get_lun
-> for i=0, n_elements(m.slitname)-1 do printf, lun, m[i].slitname
-> free_lun, lun
+```
+openw, lun, 'XXXslits.cat', /get_lun
+for i=0, n_elements(m.slitname)-1 do printf, lun, m[i].slitname
+free_lun, lun
+```
 
 Then go into the slitcat and remove the lines that correspond to the slits that have failed. After that you add to your normal IDL command line:
 
-> slitcat = 'XXXslits.cat'
-> domask... slitcat=slitcat
-
+```
+slitcat = 'XXXslits.cat'
+domask... slitcat=slitcat
+```
 # Run zspec
-> cd $D2_RESULTS
-> zspec,'maskname',/orelse
-
+```
+cd $D2_RESULTS
+idl
+zspec,'maskname',/orelse
+```
 where 'maskname' is the short deimos mask name (e.g. a5233A)
