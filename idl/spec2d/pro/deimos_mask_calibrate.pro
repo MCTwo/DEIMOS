@@ -32,7 +32,7 @@
 ;
 ; COMMENTS:
 ;   working code, still evolving
-;
+
 ; REVISION HISTORY:
 ;  Doug Finkbeiner, Marc Davis 3Jun2002
 ;  JAN 07jul02 - pix-flat normalization included
@@ -300,12 +300,6 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ; process optical model for this chip
      model_lambda =  deimos_omodel(chipno, slitcoords, arc_header)
-     model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 25.*(model_lambda.lambda_y[0] ne 0)          ;changed BL 6/24/09, suggested by Jeff Newman, trying these lines to change the optical model guess for the new FCS actuator, the actual central wavelength is about 26 A off of the reported central wavelength
-     goodlammod = model_lambda.lambda_y[0,where(model_lambda.lambda_y[0] gt 0)]
-     meangoodlammod = mean(goodlammod)
-     
-     model_lambda.lambda_y_top[0] = model_lambda.lambda_y_top[0] + 25.*(model_lambda.lambda_y_top[0] ne 0)
-     model_lambda.lambda_y_bottom[0] = model_lambda.lambda_y_bottom[0] + 50.*(model_lambda.lambda_y_bottom[0] ne 0)
 
      nslits=total(model_lambda.xb gt 0 AND model_lambda.xt gt 0)
 
@@ -677,7 +671,8 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
         endif else begin
            deimos_makeflat, rect_flat, flat2d, flat1d, vigcorr=vigcorr, $
               varslitfn=varslitfn, ivar=rect_flativar, $
-              mask=flatmask, bitmask=rect_nearvig, quick=quick
+              mask=flatmask, bitmask=rect_nearvig, quick=quick, $
+              minedge=5+2*(grating lt 601)
        endelse
 ; if this is an alignment star, set slitfn & flat to 1...
 
@@ -795,6 +790,8 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
            'Was X1 synthesized from other traces?'
          sxaddpar, hdr, 'WAVESIG', sigma, $
            'RMS error in lambda solution, in AA (1&10 are flags)'
+
+if n_elements(slitnames) eq 0 then stop
 
          whobj=where(slitnames eq bluslitno,objct)
          if objct gt 0 then objid=objnames[min(whobj)] else objid=0

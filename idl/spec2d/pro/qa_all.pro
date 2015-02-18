@@ -68,6 +68,8 @@ pro qa_all
   for i=0,nfiles-1 do begin
       ss = mrdfits(files[i], 1, hdr, /silent)
       all[i].maskname = sxpar(hdr, 'maskname')
+      maskn = strmid(all[i].maskname,0,4)
+      if strnumber(maskn) eq 0 then maskn = strcompress(all[i].maskname, /rem)
       all[i].date = sxpar(hdr, 'date-obs')
       all[i].airmass = sxpar(hdr, 'airmass')
       all[i].astar_seeing = sxpar(hdr, 'asee')
@@ -78,38 +80,32 @@ pro qa_all
 
       nredgood = total(zcat.magr-zcat.magi gt redlim $
                        AND zcat.pgal gt 0.2 $
-                       AND strcompress(zcat.maskname, /rem) eq $
-                       strcompress(all[i].maskname, /rem) $
+                       AND strcompress(zcat.maskname, /rem) eq maskn $
                        AND zcat.zquality ge 3 AND zcat.zquality le 4 $
                        AND zcat.z gt 0.005)
 
       nred = total(zcat.magr-zcat.magi gt redlim $
                    AND zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem))
+                   AND strcompress(zcat.maskname, /rem) eq maskn)
       
       nredbad = total(zcat.magr-zcat.magi gt redlim $
                          AND zcat.pgal gt 0.2 $
-                         AND strcompress(zcat.maskname, /rem) eq $
-                         strcompress(all[i].maskname, /rem) $
+                         AND strcompress(zcat.maskname, /rem) eq maskn $
                          AND zcat.zquality ge 1 AND zcat.zquality le 2)
             
       ngood = total(zcat.pgal gt 0.2 $
-                       AND strcompress(zcat.maskname, /rem) eq $
-                       strcompress(all[i].maskname, /rem) $
+                       AND strcompress(zcat.maskname, /rem) eq maskn $
                        AND zcat.zquality ge 3 AND zcat.zquality le 4 $
                        AND zcat.z gt 0.005)
     
     
       nbad = total(zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem) $
+                   AND strcompress(zcat.maskname, /rem) eq maskn $
                    AND zcat.zquality ge 1 AND zcat.zquality le 2)
     
 
       nobj = total(zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem))
+                   AND strcompress(zcat.maskname, /rem) eq maskn)
 
 
       redsuccess = (nredgood/(nredbad+nredgood))

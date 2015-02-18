@@ -56,7 +56,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 
 
   maskstr = size(maskno, /tname) EQ 'STRING' ? $
-          maskno : string(maskno, format='(I4.4)')
+    maskno : string(maskno, format='(I4.4)')
 
   vprint, 4, 'Reading tables...'
   bfile = findfile(strmid(maskstr,0,4)+'*bintab*.fits*', count=nfiles)
@@ -363,7 +363,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
         skyok = bytarr(sizey)
 
 
-	edge=5
+	edge=5+2*(grating lt 601)
 
         skyok[edge:sizey-edge-1] = 1B
         ; remove rows near objects (within wid pixels)
@@ -505,7 +505,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 ; could add an isdeepdata check
 	   if min(spslit.slitfn) ne max(spslit.slitfn) $
 	     AND n_elements(spslit.slitfn) gt 15 then $
-             spslit=deimos_fixslitends(spslit,varslitfn,leftshift,rightshift)
+             spslit=deimos_fixslitends(spslit,varslitfn,leftshift,rightshift,edge=7+2*(grating lt 601))
         endif   
 
 

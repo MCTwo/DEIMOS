@@ -66,9 +66,7 @@ function deimos_skytweak_var,  slit,  sset, color, new_wave1d=new_wave, $
   errflag =  0
   dir = getenv('DEEP_DIR')+'/'
   if dir eq '/' then message, 'you must set $DEEP_DIR'
-  mm = mrdfits(dir+'spec2d/etc/uves_sky.fits',1)
-  temp_wave = mm.lambda
-  temp_flux = mm.spec
+  restore,  file=dir+'spec2d/etc/template.sav'
 
 ;----restores template sky spectrum from HiRes: 
 ;----wavelength array in temp_wave, flux in temp_flux

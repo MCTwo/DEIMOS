@@ -91,10 +91,10 @@
 
 ; make a simple procedure to set the return variables to null
 ; results in case of errors.
-pro set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype
-  fwhm = 0.0
-  objnum = 0
-  objtype = ''
+pro set_nulls, nnull, fwhm=fwhm, objnum=objnum, objtype=objtype
+  fwhm = fltarr(nnull)
+  objnum = lonarr(nnull)
+  objtype = strarr(nnull)+''
 end
 ; ---------------------------------
 
@@ -146,7 +146,7 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
 ; if the design table is NOT found, then return null values.
   else begin
       print, 'No DesiSlits table found in ' + bfile + ' file!!!'
-      set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype
+      set_nulls, 1, fwhm=fwhm, objnum=objnum, objtype=objtype
       return, 0.
   endelse
 
@@ -183,7 +183,7 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
   if cnt eq 0 then begin
       print, 'Slit(s) ' + string(slitn, format='(I3.3)') + $
         ' not found in DesiSlits table!'
-      set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype
+      set_nulls, 1, fwhm=fwhm, objnum=objnum, objtype=objtype
       return, 0.
   endif
   objtype = design[desidex].slittyp
@@ -202,9 +202,9 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
       print, 'Slit(s) ' + string(slitn, format='(I3.3)') + $ 
         ' not found in SlitObjMap table!'
       if isdeep then $
-        set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype $
+        set_nulls, 1, fwhm=fwhm, objnum=objnum, objtype=objtype $
       else begin
-          set_nulls, fwhm=fwhm, objnum=objnum
+          set_nulls, 1, fwhm=fwhm, objnum=objnum
       endelse
       return, 0.
   endif
@@ -220,7 +220,7 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
   edgeloss = (desilen - nrows) / 2.
 ; finally, calculate the object position.
   objpos = slitobjmap[mapdex].botdist / pixscl - edgeloss
-  print, objpos, slitobjmap[mapdex].botdist, pixscl, edgeloss, desilen, nrows
+
 ; ---------------------------------
 ; now find the correct entry in the ObjectCat for this slit. Note that
 ; slitobjmap.objectid and objectcat.objectid are arrays of longs such
@@ -262,10 +262,10 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
         ' in slit(s) ' + string(slitn, format='(I3.3)') + $
         ' not found in ObjectCat table!'
       if isdeep then $
-        set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype $
+        set_nulls, n_elements(objpos), fwhm=fwhm, objnum=objnum, objtype=objtype $
       else begin
           objtype = design[desidex].slittyp
-          set_nulls, fwhm=fwhm, objnum=objnum
+          set_nulls, n_elements(objpos), fwhm=fwhm, objnum=objnum
       endelse
       return, objpos
   endif
@@ -319,7 +319,7 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
             ' in slit(s) ' + string(slitn, format='(I3.3)') + $
             ' not found in PhotCat table!'
 ; return the values, but return a fwhm = 0 and objpos = 0.
-          set_nulls, fwhm=fwhm
+          set_nulls, n_elements(objpos), fwhm=fwhm
           return, objpos
       endif
 ; define the cfht pixel scale (arcseconds per pixel).

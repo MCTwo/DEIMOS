@@ -85,9 +85,9 @@ if wrongmode then begin
 
        spawn,'whoami',account
  
-       spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh.au &'
+       spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
 
-       spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
+       spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
 
     openw, 2, '/home/'+account+'/temp/error.txt'
               printf, 2

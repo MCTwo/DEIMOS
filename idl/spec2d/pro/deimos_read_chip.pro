@@ -69,7 +69,7 @@ if n_elements(quick) eq 0 then quick=0
         print, '  File name: ', fname
         print, '  Header number:', hno
         print, '  DATASUM (header):', datasum, '    computed checksum:', sum32
-        print, 'Data may be corrupted!!'	; changed 11/18/09 BL, didn't want it crashing on checksum (because of a 1429B file), changed message-> print
+        message, 'Data may be corrupted!!'
      endif else begin 
         print, 'CHECKSUM correct: ', sum32
      endelse 
@@ -97,7 +97,7 @@ if n_elements(quick) eq 0 then quick=0
         print, '  File name: ', fname
         print, '  Header number:', hno
         print, '  Computed header checksum (should be 4294967295):', headsum
-        print, 'Corrupted file header!!'	; changed 11/18/09 BL, didn't want it crashing on checksum (because of a 1429B file), changed message-> print
+        message, 'Corrupted file header!!'
      endif else begin 
         print, '  Header intact'
      endelse

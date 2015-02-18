@@ -266,6 +266,10 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
   ss1 = mrdfits(file1d, dex[0], hdrB, /silent)
   header = hdrB
 
+  angperpix = sxpar(header, 'CD1_1')
+  if angperpix lt 0.4 and angperpix gt 0 then tweakable = 1 else tweakable = 0
+  tweak = tweak*tweakable
+
   if tweak then ss1.lambda=applytweaks(ss1.lambda,hdrB,path)
 
   notfinite = where(finite(ss1.spec)*finite(ss1.ivar) eq 0, nct)
@@ -471,13 +475,12 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
           lambda1 = ss1.lambda[nlam-1] + dlam
           lambda2 = ss2.lambda[0] - dlam
           gap_lam = makearr(gapsize, lambda1, lambda2)
-          gap_ivar = fltarr(gapsize); + 1E-20
-          
-	  blu_lev = median(ss1.spec[nlam-1:nlam-50])	;changed BL 6/2/2008, was derived from a single array value at the end of the blue chip spectrum
-          red_lev = median(ss2.spec[0:nlam+50])
+          gap_ivar = fltarr(gapsize) + 1E-20
+          blu_lev = ss1.spec[nlam-1]
+          red_lev = ss2.spec[0]
           gap_spec = findgen(gapsize)/(gapsize-1) * $
             (red_lev-blu_lev) + blu_lev
-	  spec = [ss1.spec, gap_spec, ss2.spec]
+          spec = [ss1.spec, gap_spec, ss2.spec]
           lambda = [ss1.lambda, gap_lam, ss2.lambda]
           ivar = [ss1.ivar / chip_ratio^2, gap_ivar, ss2.ivar]
 ;          ss1d = {spec:spec, lambda:lambda, ivar:ivar, $
@@ -553,14 +556,10 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
 ;---------------------------
           slitn = STRING(SXPAR(hdrB, 'SLITNO'), forMAT='(I3.3)')
           mask = SXPAR(hdrB, 'SLMSKNAM')
-          ;if STRLEN(mask) gt 4 then mask = STRMID(mask, 0, 4)	;edited out for 1604 data
-          mask = strcompress(mask, /remove_all) 	;added for 1604 data
-	  blufile = 'calibSlit.' + mask + '.' + slitn + 'B*'
+          if STRLEN(mask) gt 4 then mask = STRMID(mask, 0, 4)
+          blufile = 'calibSlit.' + mask + '.' + slitn + 'B*'
           redfile = 'calibSlit.' + mask + '.' + slitn + 'R*'
-	  ;CHANGE THIS IF NOT USING ORELSE DATA!!
-          blufile = '/Volumes/Data2/orelse/lemaux/deimos/ORELSEmasks/' + mask + '/*/' + blufile 
-	  redfile = '/Volumes/Data2/orelse/lemaux/deimos/ORELSEmasks/' + mask + '/*/' + redfile 
-	  blu = MRDFITS(blufile, 1, /SILENT)
+          blu = MRDFITS(blufile, 1, /SILENT)
           red = MRDFITS(redfile, 1, /SILENT) 
           nrows = n_elements(blu.rawflat[0,*])
           nlam = n_elements(blu.rawflat[*,0])
@@ -683,42 +682,13 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
             print, '(fill_gap.pro) ERROR: gap too large to fill!'
           return, 0.
       endif
-      if keyword_set(nbins) then nbins = nbins[0] $
-          else nbins = 5
-          if keyword_set(binsz) then binsz = binsz[0] $
-          else binsz = 100
-      if keyword_set(npoly) then npoly = npoly[0] $
-          else npoly = 1     
       lambda1 = ss1.lambda[nlam-1] + dlam
       lambda2 = ss2.lambda[0] - dlam
       gap_lam = makearr(gapsize, lambda1, lambda2)
       gap_ivar = fltarr(gapsize) + 1.0E-30
-      
-      blu_lev_array = fltarr(nbins)  ;changed BL 6/2/2008 for same reason as change in blu_lev/red_lev above (see /flats section), but this is much more elaborate
-      blu_lam_array  = fltarr(nbins)
-      red_lev_array = fltarr(nbins)       
-      red_lam_array = fltarr(nbins)
-      	  for i=0, nbins-1 do begin
-          blu_lev_array[i] = median(ss1.spec[nlam-(nbins-i)*binsz-1:nlam-(nbins-1-i)*binsz-1])
-	  blu_lam_array[i] = mean(ss1.lambda[nlam-(nbins-i)*binsz-1:nlam-(nbins-1-i)*binsz-1])
-          red_lev_array[i] = median(ss2.spec[i*binsz:(i+1)*binsz])
-          red_lam_array[i] = mean(ss2.lambda[i*binsz:(i+1)*binsz])
-	  endfor 
-      
-      
-      lev_array = [blu_lev_array, red_lev_array]
-      lam_array = [blu_lam_array, red_lam_array]
-      lev_poly = polyfit(lam_array, lev_array, npoly)
-      ;blu_lev = median(ss1.spec[nlam-51:nlam-1]) ;edited out BL 6/2/2008 for same reason as above (see /flats section)
-      ;red_lev = median(ss2.spec[0:50])
-      flam = 0.   
-      
-         for i=0, npoly do begin
-         flam = flam + lev_poly[i]*gap_lam^(i)
-      	 endfor
-      
-      gap_spec = fltarr(gapsize) + flam ;findgen(gapsize)/(gapsize-1)*(red_lev-blu_lev) + blu_lev
-      ;gap_ivar = 1/gap_spec^2				;changed 4/7/09 BL, making the inverse variance associated with gap counts Poissonian, is bullshit, but if I'm going to use the interpolation over the gap for measurements, this is a reasonable estimate of the error. Previous method was to set all ivar counts to 1e-30 (variance = 1e30)
+      blu_lev = ss1.spec[nlam-1]
+      red_lev = ss2.spec[0]
+      gap_spec = findgen(gapsize)/(gapsize-1)*(red_lev-blu_lev) + blu_lev
       spec = [ss1.spec, gap_spec, ss2.spec]
       lambda = [ss1.lambda, gap_lam, ss2.lambda]
       ivar = [ss1.ivar, gap_ivar, ss2.ivar]

@@ -2,14 +2,13 @@
 /bband.fits/1.1/Tue Jul  2 05:47:11 2002//
 /blue_lamp_list.dat/1.2/Thu Jan  9 03:16:55 2003//
 /deep_skylines.dat/1.5/Tue Dec 17 00:51:39 2002//
+/deimos_anamorph.dat/1.2/Wed Oct  1 17:16:49 2003//
 /lamp_NIST.dat/1.6/Thu Jan 23 00:01:49 2003//
+/lamp_NIST_blue.dat/1.15/Wed Jun  9 00:14:58 2004//
 /lamp_tmp.dat/1.1/Mon Sep 30 17:18:02 2002//
 /lamphgcdne.dat/1.1/Wed Sep 19 03:16:54 2001//
 /lamplist.dat/1.4/Thu Jul 25 05:02:47 2002//
 /opcamera/1.1/Thu Jun 13 04:31:05 2002//
 /sdss_skylines.dat/1.1/Wed Jun  5 12:21:55 2002//
 /template.sav/1.2/Tue Oct  1 21:08:32 2002//
-D/nist_data////
-D/obsolete////
-/deimos_anamorph.dat/1.2/Fri Apr 23 02:04:09 2004//
-/lamp_NIST_blue.dat/1.15/Thu Mar 31 02:35:08 2005//
+D

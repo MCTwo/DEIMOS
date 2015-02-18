@@ -13,7 +13,7 @@
 ;
 ; CALLING SEQUENCE:
 ;
-;   fixedspslit=deimos_fixslitends(spslit,slitfn2d,leftshift,rightshift)
+;   fixedspslit=deimos_fixslitends(spslit,slitfn2d,leftshift,rightshift,edge=edge)
 ;
 ; INPUTS:
 ;     spslit -- an spslit structure
@@ -28,7 +28,7 @@
 ;   jan 2003 mar 26
 ;-
 
-function deimos_fixslitends, spslit,slitfn2d,shiftl, shiftr
+function deimos_fixslitends, spslit, slitfn2d, shiftl, shiftr, edge=edge
 
 	
 	s=size(spslit.flux,/DIM)
@@ -57,7 +57,7 @@ function deimos_fixslitends, spslit,slitfn2d,shiftl, shiftr
 	sigfix=fix
     npixi=fltarr(nsegments-1)
     npixsky=npixi
-        edge=7
+      if n_elements(edge) eq 0 then edge=7
     junk=1.
 
             tempslit=spslit

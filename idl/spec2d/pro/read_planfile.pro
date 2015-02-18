@@ -152,6 +152,7 @@ pro read_planfile,  planfile, maskno, rawdatadir, outdatadir, $
 
       'DEG': degree =  fix(strcompress(substring[1], /remove_all))
 
+
        else: a = 0 ;junk statement
       
     endcase
@@ -180,7 +181,7 @@ pro read_planfile,  planfile, maskno, rawdatadir, outdatadir, $
   foo = findfile(sciencenames[0], count=ct)
   if ct EQ 0 then message, 'Could not find first science image: ' $
       +sciencenames[0], /cont
-  
+
   endif
 
 ; just do a reality check that these files exist!

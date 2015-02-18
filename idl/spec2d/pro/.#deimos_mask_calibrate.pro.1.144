@@ -1,14 +1,13 @@
 ;+
 ; NAME:
-;   deimos_mask_calibrate_oldslider4
+;   deimos_mask_calibrate
 ;
 ; PURPOSE:
 ;   top level routine to generate flats and arcs to a given mask,
-;   with separate FITS files for each slitlet. For slider 4 data taken
-;   prior to May of 2009.
-; 
+;   with separate FITS files for each slitlet.
+;
 ; CALLING SEQUENCE:
-;   deimos_mask_calibrate_oldslider4, planfile, chiplist=chiplist, $
+;   deimos_mask_calibrate, planfile, chiplist=chiplist, $
 ;                          onlyalign=onlyalign, slitlist=slitlist
 ; 
 ; INPUTS:
@@ -97,7 +96,7 @@ end
 
 
 
-pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=noplot, $
+pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
      slitlist=slitlist, onlyalign=onlyalign,quick=quick
 
   if n_elements(quick) eq 0 then quick = 0
@@ -154,8 +153,6 @@ pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=nopl
         vprint, 1, $
         string('No MaskDesign table found in file ' + bfile + '!!!') $
       else masktab = mrdfits(bfile, maskdex[0], /silent)
-      simple_tables,bfile,slitnames=slitnames,objnames=objnames
-
   endelse
 
 ; set the read-noise value.
@@ -301,9 +298,11 @@ pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=nopl
 
 ; process optical model for this chip
      model_lambda =  deimos_omodel(chipno, slitcoords, arc_header)
-     model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 25.		;changed BL 5/5/09, these three lines suggested by Jeff Newman to fix the slider four optical model problem
-     model_lambda.lambda_y_top[0] = model_lambda.lambda_y_top[0] + 25.
-     model_lambda.lambda_y_bottom[0] = model_lambda.lambda_y_bottom[0] + 50.
+; kloog (DS - 2008apr30)
+    model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 50.
+    model_lambda.lambda_y_top[0] = model_lambda.lambda_y_top[0] + 50.
+    model_lambda.lambda_y_bottom[0] = model_lambda.lambda_y_bottom[0] + 50.
+
      nslits=total(model_lambda.xb gt 0 AND model_lambda.xt gt 0)
 
 
@@ -425,6 +424,7 @@ pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=nopl
      flatinterp=deimos_fixglow(flatinterp, $
          mask=((deimos_badchip AND 1b) EQ 1b),fixbottom=chipisred)
 
+; following lines (through end if) were commented out to deal with cdf07b (07oct; DS)
      if quick le 0 then begin
    
 ; correct for the scattered light.  This is a 6-8% effect in our flats; the below code gets it right to 5-10%
@@ -563,7 +563,6 @@ pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=nopl
 
 ;retrieve true slitn, for use in output name and for possible selection
        bluslitno = slitcoords[indblu[slitno]].slitno
-       print, 'Bluslitno is', bluslitno						;added BL 5/13
 ; get the slitpa and maskpa for this slit/mask.
        get_pa, bluslitno, slitpa=slitpa, maskpa=maskpa, $
          desitab=desitab, masktab=masktab
@@ -793,10 +792,7 @@ pro deimos_mask_calibrate_oldslider4,  planfile,  chiplist=chiplist, noplot=nopl
            'Was X1 synthesized from other traces?'
          sxaddpar, hdr, 'WAVESIG', sigma, $
            'RMS error in lambda solution, in AA (1&10 are flags)'
-
-         whobj=where(slitnames eq bluslitno,objct)
-         if objct gt 0 then objid=objnames[min(whobj)] else objid=0
-         SXADDPAR,hdr,'OBJID',objid,'Object number'
+         
          if polyflag then $
            sxaddpar, hdr,'WAVETYPE','POLYFLAG','wavelength solution method' $
          else sxaddpar,hdr,'WAVETYPE','TRACESET','wavelength solution method'

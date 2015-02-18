@@ -25,13 +25,14 @@
 ;
 ; MODIFICATION HISTORY:
 ;   created 2003feb10
+;   modified 2011jul13 by cooper to extend beyond DEEP2/2009.
 ;-
 
 
 function juldayfromfilename,filename
 
         searchstring = strsplit(filename[0], '/.',/extract)
-        hasdate = strpos(searchstring, '200') eq 0
+        hasdate = (strpos(searchstring, '200') eq 0) > (strpos(searchstring, '201') eq 0)
         whdate = where(hasdate, datect)
         if datect gt 0 then begin
             datename=(searchstring[max(whdate)])

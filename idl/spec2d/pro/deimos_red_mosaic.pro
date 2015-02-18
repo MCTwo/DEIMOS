@@ -26,7 +26,7 @@ pro deimos_red_mosaic,  ampmode
 ;   13apr02  md
 ;----------------------------------------------------------------------
 
-; Amplifier     Vdd voltage gain(e/dn)   ange of deviation
+; Amplifier     Vdd voltage gain(e/dn)  range of deviation
 ; ---------     -----------     ------------------
 ; 1A            19.0          1.23   +0.15 to -0.41 %  
 ; 1B            19.0          1.24   +0.20 to -0.31 %

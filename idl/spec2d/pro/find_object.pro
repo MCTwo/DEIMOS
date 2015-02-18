@@ -15,7 +15,8 @@
 ; SYNTAX
 ;       sprof = find_object([slitfile, profivar=profivar, $
 ;           npix=npix, /CR, /BPM, /NOSUBTRACT, /MMM,/USETILT,$ 
-;           /SKYPROFILE, pixrange=pixrange,modeout=modeout]
+;           /SKYPROFILE, pixrange=pixrange,modeout=modeout,$
+;           hdr=hdr]
 ;
 ; INPUTS
 ;       slitfile = the (string) name of a slitfile or spSlitfile, or
@@ -35,6 +36,7 @@
 ;                  slit. 
 ;       npix = the number of pixels used in each row of the sum.
 ;              Useful for estimating S/N per pixel.
+;       hdr = FITS header, used if passed a structure rather than filename
 ;
 ; KEYWORDS
 ;       NOTE: find_object will by default choose reasonable values for 
@@ -104,8 +106,8 @@ FUNCTION find_object, slitfile,  $
                       profivar=profivar, npix=npix, $
                       cr=cr, bpm=bpm, nosubtract=nosubtract, mmm=mmm, $
                       usetilt=usetilt, skyprofile=skyprofile, atv=atv,  $
-                      pixrange = pixrange,ivarweight=ivarweight,$
-                      modeout=modeout, align=align, quick=quick
+                      pixrange = pixrange,$
+                      modeout=modeout, align=align, quick=quick, hdr = hdr
 
 
 ;;; CHECK THAT ENOUGH PARAMETERS WERE SUPPLIED 
@@ -145,13 +147,13 @@ FUNCTION find_object, slitfile,  $
 
 ;;; READ-IN THE slitfile 
   IF n_elements(slitfile) NE 0 THEN BEGIN
-     IF size(slitfile, /type) eq 7 then slit = MRDFITS(slitfile, 1, /SILENT) $
+     IF size(slitfile, /type) eq 7 then slit = MRDFITS(slitfile, 1, hdr,/SILENT) $
         else BEGIN 
           slit = slitfile
           tempname= ' '
         ENDELSE
      IF size(tempname, /type) eq 7 and skyprofile and strpos(tempname, 'spSlit') ge 0 then begin
-        sset = mrdfits(slitfile, 2, /SILENT)
+        sset = mrdfits(slitfile, 2, hdr,/SILENT)
         bspline = 1
      endif
     flux = slit.flux
@@ -160,7 +162,8 @@ FUNCTION find_object, slitfile,  $
   ENDIF
 ;;; DETERMINE NUMBER OF COLUMNS IN SLIT.
   ncols = N_ELEMENTS(lambda[0,*])
-
+  nrows=ncols
+  n = n_elements(lambda[*,0])
   lambdarange=minmax(lambda)
 
 ; choose whether to use 600-line or 1200-line skybpm file
@@ -351,15 +354,69 @@ FUNCTION find_object, slitfile,  $
 
 ;;; DETERMINE THE NUMBER OF PIXELS IN EACH ROW.    
 
-; begin interpolated scenario
-   if interp then begin
+
+if n_elements(hdr) gt 0 AND quick eq 0 then begin
+
+; calculate curvature (delta_pix) here
+
+;  n = n_elements(slit.flux[*,0])
+;  nrows=n_elements(slit.flux[0,*])
+
+ lambda_1d = wvlen
+; convert lambda to angstroms
+  lambda0 = lambda_1d / 1E4
 
 
+  slitpa=sxpar(hdr,'SLITPA')
+
+  parang = sxpar(hdr,'PARANG')
+ 
+  geom = cos(!dtor*(parang - slitpa))
+
+  chipno = sxpar(hdr,'CHIPNO')
+
+  el = sxpar(hdr,'EL')
+
+; 90 degrees minus elevation
+  z = 90. - el
+; z to radians
+  z = !dtor*z  
+   
+; (ie 610 millibar); press in mm(Hg)
+  p = 465.
+; temp in Celcius 
+  t = 0.
+  q = (1./lambda0) ^ 2 
+
+; if chipno lt 5 then q0 = q[n-1] else q0 = q[0] 
+
+  if chipno lt 5 then q0 = q[2730] else q0 = q[2048] 
+
+  delndx_std = (64.328 + 29498.1/(146.-q) + 255.4/(41.-q)) * (1E-6)
+
+  delndx_std0 = (64.328 + 29498.1/(146.-q0) + 255.4/(41.-q0)) * (1E-6)
+
+  adjust =  p * (1. + p * (1.049*(1E-6)) - t * 0.0157*(1E-6)) $ 
+     / (720.883 * (1.+ t * 0.003661))
+
+  delndx = adjust * delndx_std
+
+  delndx0 = adjust * delndx_std0
+ 
+  r = delndx / (1. + 2.*delndx)
+  r0 = delndx0 / (1. + 2.*delndx0)
+ 
+; refraction = r * tan(z)
+
+  delta_pix = geom * tan(z) * (r - r0) * 206265. / 0.1192
+
+endif else delta_pix=fltarr(n)
+
+if interp then begin
 
 ; interpolate over bad pixels/columns in the spatial direction
      if bpm AND quick le 0 $
        then flux = djs_maskinterp(flux, 1-bpmmask, iaxis = 1)
-
 
 
 ; interpolate over  non-finite pixels and skylines
@@ -427,6 +484,23 @@ FUNCTION find_object, slitfile,  $
 
 ; ivar weighted
 
+
+; shift flux, skylinemask, and weight in y direction to account for curvature
+ if quick eq 0 then begin
+     for i = 0,maxcol-mincol do begin
+         ivar[i,*] = shift(ivar[i,*],-round(delta_pix[i]))
+         badregions[i,*] = shift(badregions[i,*],-round(delta_pix[i]))
+         if n_elements(skymodel) gt 0 then skymodel[i,*] = shift(skymodel[i,*],-round(delta_pix[i]))
+         flux[i,*] = shift(flux[i,*], -round(delta_pix[i]))
+         skylinemask[i,*] = shift(skylinemask[i,*], -round(delta_pix[i]))
+
+         if round(delta_pix[i]) gt 0 then $
+           ivar[i, nrows-round(delta_pix[i]): nrows - 1] = 0 
+                                ;ivar[i, nrows-1 : nrows-round(delta_pix)] = 0 
+         if round(delta_pix[i]) lt 0 then ivar[i, 0 : -round(delta_pix[i]) - 1] = 0
+     endfor
+ endif
+
      if skyprofile  then ivarweight = 0
 
 ; establish weight array (IVAR in simplest case)
@@ -440,48 +514,82 @@ FUNCTION find_object, slitfile,  $
         intarr(7, 7)+1)
 
 ; make the 1-d profile
+
      profivar = total(skylinemask[minpix:maxpix, *]*weight, 1)
 
      sprof = total(flux[minpix:maxpix, *]*skylinemask[minpix:maxpix, *] $
                    *weight, 1)/ profivar
 
-     if not ivarweight then profivar = $
-       total(skylinemask[minpix:maxpix, *]*ivar[minpix:maxpix,*], 1)
 
+
+
+  if not ivarweight then profivar = $
+     total(skylinemask[minpix:maxpix, *]*ivar[minpix:maxpix,*], 1)
      
-   endif else begin
 
-; begin non-interpolated scenario
+  endif else begin
 
 
-; note that slitmask is 1 on GOOD pixels
-     slitmask = slitmask AND skylinemask AND crmask AND bpmmask $
-                AND pixmapmask AND (ivar ne 0)
+     ; begin non-interpolated scenario
 
-     npix = TOTAL(slitmask, 1)
 
-;;; NOW MULTIPLY flux BY slitmask AND TOTAL 
-;;; TO DETERMINE THE SPATIAL DISTRIBUTION OF 
-;;; THE OBJECT FLUX ACROSS THE SLIT. DIVIDE 
-;;; BY THE NUMBER OF PIXELS IN EACH ROW SO THAT
-;;; THE FLUX VALUES IN sprof ARE AN AVERAGE OF 
-;;; THE FLUX PER PIXEL ALONG THE SPATIAL DIRECTION
-;;; OF THE OBJECT SPECTRUM. FINALLY, REMOVE THE
-;;; FIRST 3 COLUMNS AND FINAL 3 COLUMNS TO REMOVE 
-;;; ANY EDGE EFFECTS.
-     sprof = TOTAL( (slitmask * flux), 1 ) / FLOAT(npix)
+     ; note that slitmask is 1 on GOOD pixels
+         slitmask = slitmask AND skylinemask AND crmask AND bpmmask $
+                   AND pixmapmask AND (ivar ne 0)
 
-;;; MAKE SURE THAT THE SPATIAL PROFILE IS FINITE IN
-;;; ALL PIXEL COLUMNS.
-     wh = WHERE(FINITE(sprof) EQ 0, whct)
-     IF whct GT 0 THEN sprof(wh) = 0.
+         npix = TOTAL(slitmask, 1)
 
-;;; DETERMINE THE INVERSE VARIANCE FOR THE SPATIAL PROFILE.
-     IF N_ELEMENTS(ivar) NE 0 THEN $
-       profivar = FLOAT(npix)^2/(TOTAL(slitmask/(ivar > 1.E-10), 1)) $
+    ;;; NOW MULTIPLY flux BY slitmask AND TOTAL 
+    ;;; TO DETERMINE THE SPATIAL DISTRIBUTION OF 
+    ;;; THE OBJECT FLUX ACROSS THE SLIT. DIVIDE 
+    ;;; BY THE NUMBER OF PIXELS IN EACH ROW SO THAT
+    ;;; THE FLUX VALUES IN sprof ARE AN AVERAGE OF 
+    ;;; THE FLUX PER PIXEL ALONG THE SPATIAL DIRECTION
+    ;;; OF THE OBJECT SPECTRUM. FINALLY, REMOVE THE
+    ;;; FIRST 3 COLUMNS AND FINAL 3 COLUMNS TO REMOVE 
+    ;;; ANY EDGE EFFECTS.
+
+ 
+    ; shift slitmask and ivar to account for curvature  
+
+    if quick eq 0 then begin
+        for i = 0, n -1 do begin
+            slitmask[i,*] = shift(slitmask[i,*],-round(delta_pix[i]))
+            ivar[i,*] = shift(ivar[i,*], -round(delta_pix[i]))
+            flux[i,*] = shift(flux[i,*], -round(delta_pix[i]))
+     
+     ; ivar[i, nrows-round(delta_pix): nrows - 1][where(delta_pix[i] lt 0)] = 0       
+
+    ; index = where(round(delta_pix[i]) lt 0, x)
+    ; if (x gt 0) then ivar[index, nrows-round(delta_pix): nrows - 1] = 0
+
+            if round(delta_pix[i]) gt 0 then $
+              ivar[i, nrows-round(delta_pix[i]): nrows - 1] = 0 
+                                ;ivar[i, nrows-1 : nrows-round(delta_pix)] = 0 
+            if round(delta_pix[i]) lt 0 then ivar[i, 0 : -round(delta_pix[i]) - 1] = 0
+
+            if round(delta_pix[i]) gt 0 then $
+              slitmask[i, nrows-round(delta_pix[i]): nrows - 1] = 0 
+                                ;ivar[i, nrows-1 : nrows-round(delta_pix)] = 0 
+            if round(delta_pix[i]) lt 0 then slitmask[i, 0 : -round(delta_pix[i]) - 1] = 0
+        endfor
+    endif
+
+
+    sprof = TOTAL( (slitmask * flux), 1 ) / FLOAT(npix)
+
+    ;;; MAKE SURE THAT THE SPATIAL PROFILE IS FINITE IN
+    ;;; ALL PIXEL COLUMNS.
+       wh = WHERE(FINITE(sprof) EQ 0, whct)
+       IF whct GT 0 THEN sprof(wh) = 0.
+
+    ;;; DETERMINE THE INVERSE VARIANCE FOR THE SPATIAL PROFILE.
+       IF N_ELEMENTS(ivar) NE 0 THEN $
+          profivar = FLOAT(npix)^2/(TOTAL(slitmask/(ivar > 1.E-10), 1)) $
        ELSE profivar = FLOAT(npix)/sprof
 
-   ENDELSE
+   endelse
+ 
 
    whinf=where(finite(sprof) eq 0, infct)
 	if infct gt 0 then sprof[whinf]=-1.
@@ -565,11 +673,13 @@ FUNCTION find_object, slitfile,  $
      endelse
 
 ;     align = [left2+right2]/2.
-  endelse
+  endelse 
+
+
 ;;;;;;;;;;;;;;;;;;
 
 ;;; RETURN THE SPATIAL PROFILE.
-  RETURN, sprof
+  RETURN,sprof
 
 END
 

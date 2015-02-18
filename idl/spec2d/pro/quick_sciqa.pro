@@ -29,6 +29,9 @@ if quicklevel lt 2 then bspline = 1 else bspline = 0
 ;hdu = next/(1+bspline)
 hdu = next - bspline
 
+d=mrdfits(qlfiles[0],hdu,status=status)
+if status lt 0 then hdu = hdu - 1
+
 ; Check for buckling
 chiparr=fltarr(count)
 dxarr=fltarr(count)
@@ -139,8 +142,8 @@ nstar = n_elements(whb) < n_elements(whr)
  
 ; if mask might be buckled, alert!
    if median(dxarr,/even) gt 3.5 OR min(dxarr) gt 3. OR sigdx gt 1.5 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+'/home/deepteam/sounds/doh.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
 
 
             openw, 2, '/home/'+account+'/temp/error.txt'
@@ -208,8 +211,8 @@ badseeing = 0
 
 ; if seeing is bad, alert!
    if medfwhm gt 1.1 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh.au &'
   
       badseeing = 1
 
@@ -237,8 +240,8 @@ badseeing = 0
 
 ; if seeing has degraded, alert!
    if medfwhm gt (bestseeing+0.3) AND badseeing eq 0 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh2.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh2.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh2.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/doh2.au &'
  
             openw, 2, '/home/'+account+'/temp/error.txt'
             printf, 2
@@ -265,8 +268,8 @@ badseeing = 0
 
 ; if alignment is bad, alert!
    if medshift gt 0.25 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/STTNG-redalert.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/STTNG-redalert.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99  /home/deepteam/sounds/Homer_Scream.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/Homer_Scream.au &'
 
             openw, 2, '/home/'+account+'/temp/error.txt'
             printf, 2
@@ -368,8 +371,8 @@ print
 
 ; if signal-to-noise is bad, alert!
   if  (noms2n+s2nnoise) lt s2nlimit OR (nmask gt 1 and nleft gt (3-nmask+0.5*err)) then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/Homer_Scream.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/Homer_Scream.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/Homer_Scream.au &'
+      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/Homer_Scream.au &'
      cd,current=cwd
      stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
      mask = stringsep[n_elements(stringsep)-1]
@@ -391,7 +394,7 @@ print
 
 
 
-      if bad eq 0 then if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 49 -host pohue -account '+account+' /home/deepteam/sounds/Homer-Wohoo.au &'
+      if bad eq 0 then if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 /home/deepteam/sounds/Homer-Wohoo.au &'
 
 return
 end

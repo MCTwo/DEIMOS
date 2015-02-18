@@ -1,5 +1,8 @@
 
-pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = varslitfn, ivar=ivar, mask = mask, bitmask = bitmask, quick=quick
+pro deimos_makeflat, flat_image, flat2d, flat1d, $
+                     vigcorr=vigcorr, varslitfn=varslitfn, $
+                     ivar=ivar, mask=mask, bitmask=bitmask, $
+                     minedge=minedge, quick=quick
 ;+
 ; NAME:
 ;   deimos_makeflat
@@ -16,7 +19,7 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 ;
 ; CALLING SEQUENCE:
 ;   deimos_makeflat, flat_image, flat2d, flat1d,[vigcorr=vigcorr, $
-;         varslitfn=varslitfn,ivar= ivar, bitmask=bitmask,mask=mask]
+;         varslitfn=varslitfn,ivar= ivar, bitmask=bitmask,mask=mask,minedge=minedge]
 ; 
 ; INPUTS:
 ;   flat_image -- rectified flat field image for a slitlet
@@ -26,7 +29,8 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 ;
 ; KEYWORD PARAMETERS:
 ;   mask --  (output) 1 for good data, 0 for bad
-;   bitmask -- rectified bad pixel mask for this slit        
+;   bitmask -- rectified bad pixel mask for this slit    
+;   minedge: minimum # pixels to treat as edge, default 5    
 ;
 ; BUGS:
 ;
@@ -73,8 +77,10 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
   minval=min(flatinput)
   if minval LT 0 THEN flatinput = flatinput - minval + 1.
 
+  if n_elements(minedge) eq 0 then minedge=5
+
                                 ; patch up holes in flat
-  edge = (round(0.1*nn) > 5) < 10
+  edge = (round(0.1*nn) > minedge) < 10
 
   badpixels = (ivar eq 0) OR ((bitmask AND 1b) EQ 1b)
 

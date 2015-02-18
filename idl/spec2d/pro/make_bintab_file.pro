@@ -146,29 +146,28 @@ pro make_bintab_file, planfile, quick=quick
 ; data.
   for i=0,tabcnt-1 do begin 
 ; read the ith bin table and the corresponding header.
-    bintab = mrdfits(file, dex[i], hdr, /silent) 
+      bintab = mrdfits(file, dex[i], hdr, /silent) 
 ; parse the header for the extension name.
-    extname = strcompress(sxpar(hdr, 'EXTNAME'), /rem)
+      extname = strcompress(sxpar(hdr, 'EXTNAME'), /rem)
 ; FIX ERROR WITH TOPDIST and BOTDIST!
-    if extname eq 'SlitObjMap' and ddumb then begin
-      print, '(make_bintab_file.pro) Correcting error in mask design...'
-      print, '(make_bintab_file.pro) Switching topdist and botdist.'
-      tmpdist = bintab.topdist
-      bintab.topdist = bintab.botdist
-      bintab.botdist = tmpdist
-    endif
+      if extname eq 'SlitObjMap' and ddumb then begin
+          print, '(make_bintab_file.pro) Correcting error in mask design...'
+          print, '(make_bintab_file.pro) Switching topdist and botdist.'
+          tmpdist = bintab.topdist
+          bintab.topdist = bintab.botdist
+          bintab.botdist = tmpdist
+      endif
 ; write the bin table and header to the output file
 ; (xxxx.bintabs.fits).
-
       mwrfits, bintab, bin_file, hdr, /silent
   endfor
 
 ; now get the 'ObjectCat' bin table.
   objdex = where(fcb.extname eq 'ObjectCat', cnt)
   if cnt eq 0 then begin
-    fits_close, fcb
-    message, 'ObjectCat bin table not found!' ,/info
-    return
+      fits_close, fcb
+      message, 'ObjectCat bin table not found!' ,/info
+      return
   endif else objdex = objdex[0]
   objcat = mrdfits(file, objdex, /silent)
   
@@ -186,7 +185,13 @@ pro make_bintab_file, planfile, quick=quick
   if (isdeep and quick eq 0) or isktrs then begin
 ; read the first object number taking only the first 2 digits in the
 ; string - this denotes the photometry field.
-      obj0 = string(objcat[0].object, format='(I8.8)')
+      if isdeep then begin
+          objall = long(objcat.object)
+          gndex = where(objall lt 4.4E7, gncnt)
+          if gncnt eq 0 then message, 'No objects with DEEP2 id on a DEEP2 mask!'
+          iidex = gndex[0]
+      endif else iidex = 0
+      obj0 = string(objcat[iidex].object, format='(I8.8)')
       field = strmid(obj0, 0, 2)
 ; check if the mask is from the Groth strip. if so, get pcat 10.
       if strmid(field, 0, 1) eq '1' then field = '10'

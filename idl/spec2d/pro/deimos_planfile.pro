@@ -90,8 +90,11 @@ pro deimos_plan, s, maskname, rawdatadir
        systime()
      printf, wlun, '# Grating: ', a[0].grating, '       Grangle: ', $
        a[scienceind[0]].grangle
+
      printf, wlun, maskname, format='("MASK: ",A)'
      printf, wlun, rawdatadir, format='("RAWDATADIR: ",A)'
+     if strcompress(a[0].grating, /rem) eq '600ZD' then $
+       printf, wlun, 'LINELIST: lamp_NIST_blue.dat'
      printf, wlun, 'polyflag   - use polyflag for fitting lambda'
      printf, wlun, a[flatind].fname, format='("FLATNAME: ",A)'
      printf, wlun, a[arcind].fname, format='("ARCNAME: ",A)'

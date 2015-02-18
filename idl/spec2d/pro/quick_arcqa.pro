@@ -37,8 +37,8 @@ spawn, 'mkdir /home/'+account+'/temp'
 
 
 if count gt 0 then begin
-      spawn, 'play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/STTNG-redalert.au'
-      spawn, 'play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/STTNG-redalert.au'
+      spawn, 'play_sound -v 99  /home/deepteam/sounds/Homer_Scream.au'
+     
      cd,current=cwd
      stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
      mask = stringsep[n_elements(stringsep)-1]
@@ -93,8 +93,8 @@ if count gt 0 then begin
      nlines = long(total(lamps.element eq lamps_on[i]))
      print, lamps_on[i], nlines
      if nlines eq 0 OR (lamps_on[i] eq 'Ne' AND nlines le 10) then begin
-        spawn, 'play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh2.au'
-        spawn, 'play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh2.au'
+        spawn, 'play_sound -v 99 /home/deepteam/sounds/doh2.au'
+        spawn, 'play_sound -v 99 /home/deepteam/sounds/doh.au'
        cd,current=cwd
        stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
        mask = stringsep[n_elements(stringsep)-1]

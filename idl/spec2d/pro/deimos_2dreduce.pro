@@ -80,8 +80,11 @@ pro deimos_2dreduce,  planfile,  chiplist=chiplist, outdir=outdir, $
    chipnums=fix(strsplit(chiptext,',',/extract))
    if NOT keyword_set(chiplist) then chiplist=chipnums
 
+; edit the maskname, if it's a DEEP mask...
+  deimos_isdeep, isdeep, maskname
 
-  if strpos(maskname, '.E') ge 0 OR strpos(maskname,  '.W') ge 0 then reads, maskname, maskno, format='(I4.4)' else maskno = maskname;get mask_number
+  if strpos(maskname, '.E') ge 0 OR strpos(maskname,  '.W') ge 0 then $
+    reads, maskname, maskno, format='(I4.4)' else maskno = maskname ;get mask_number
   if strpos(rawdatadir, '/') ne 0 then maskdir = deimos_data+ rawdatadir $
     else maskdir = rawdatadir
 

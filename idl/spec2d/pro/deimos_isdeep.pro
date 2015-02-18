@@ -63,8 +63,7 @@ pro deimos_isdeep, isdeep, maskname, file=file
   if n_params() gt 1 and size(maskname, /tname) eq 'STRING' then begin
 ; check for the trailing .E's and .W's.
       maskname = strcompress(maskname, /rem)
-      if stregex(maskname, '\.[EW]$') ne -1 then $
-        if isdeep and (strlen(maskname) gt 4) then $
+      if isdeep and (strlen(maskname) gt 4) then $
         maskname = strmid(maskname, 0, 4)
   endif
 

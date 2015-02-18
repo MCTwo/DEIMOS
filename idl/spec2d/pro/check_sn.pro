@@ -40,8 +40,10 @@ pro check_sn, mask, nomsig=nomsig,  output=output,  nmask=nmask, err=err, nleft=
 
      fileexists =  file_test('science_qa.dat')
 
-;     if fileexists eq 1 then filein = 'science_qa.dat' $
-;        else filein = '../science_qa.dat'
+     if fileexists eq 1 then filein = 'science_qa.dat' $
+        else filein = '../science_qa.dat'
+
+	fileexists=file_test(filein)
 
      filein = 'science_qa.dat'
 

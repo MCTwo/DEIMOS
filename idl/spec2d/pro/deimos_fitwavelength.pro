@@ -79,42 +79,18 @@ pro deimos_fitwavelength, rect_arc, rect_arcsat, rect_arcivar, lamps, $
 
   ignorevig = (rect_arcsat eq 4b OR rect_arcsat eq 6b)
 
-  ;help, rect_arcivar, ignorevig
 ; don't use the middle row if e.g. it's on a bad column, or the
 ; vignetted regions at the ends of the mask
   nbadpix=total((rect_arcivar eq 0) AND (ignorevig eq 0),1)
   srt=nbadpix[sort(nbadpix)]
 
-  ;print, 'The number of bad pixels are', nbadpix		;Added BL 5/13
-
   whok=where(nbadpix le ((srt[0.3*sizey]+30) < sizex/2),okct)
-  if okct gt 0 then begin
-	minfrommid=min(abs(whok-ymid),newymid) 
-	print, 'Minimum offset is ', min(whok-ymid)		;Added BL 5/13
-	print, 'The y slitsize is ', sizey
-	endif else begin
-    
-	minfrommid = 0
-
-	endelse
-  if minfrommid gt 0 and sizey ne 108 then print,'Using row ',whok[newymid],' instead of central row ',ymid
+  if okct gt 0 then minfrommid=min(abs(whok-ymid),newymid) else $
+    minfrommid = 0
+  if minfrommid gt 0 then print,'Using row ',whok[newymid],' instead of central row ',ymid
   if okct gt 0 then ymid=whok[newymid]
-  if minfrommid gt 0 and sizey eq 108 then begin
-  print, where(nbadpix lt 10)
-  print,'Gotcha bitch, using row 90 instead of central row', ymid ;whok[newymid]+ymid*2,' instead of central row ',ymid
-  atv, rect_arc
-  spec2 = dirtyarc[*,ymid]
-  spec2 = reform(spec2, n_elements(spec2))
-  atvspec = dblarr(108, 4096)
-  for i=0, n_elements(spec2)-1 do begin 
-  	atvspec[*, i] = spec2[i]
-  endfor
-  atv, atvspec
-  
-  if okct gt 0 then ymid=90.
-  endif
 
-  print, 'The middle y is', ymid
+
   spec = dirtyarc[*,ymid]
 
   spec = reform(spec, n_elements(spec))

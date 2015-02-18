@@ -275,8 +275,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 
 ; define the scale in pixels at which two peaks in the spatial
 ; profile will be considered to be denoting the same object.
-  resolu = 17.
-; changed resolu from 5 to 13 for bad masks RRG
+  resolu = 5.
 ; define the scale over which to smooth the spatial profile when
 ; searching for serendips.
   smthscl = 3.
@@ -409,7 +408,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
               objnum = strcompress( string(objnum), /rem)
 ; call peakinfo to determine position of object based on the spatial
 ; profile and to measure the fwhm of the profile.
-              sprof = find_object(slit, profivar=profivar, npix=npix)
+              sprof = find_object(slit, profivar=profivar, npix=npix,hdr=hdr)
               peakinfo, sprof, pk_pixel, width, pk_quad=pkq, pk_cent=pkc, $
                 profivar=profivar, npix=npix, s2n_window=s2n_win, $
                 nbuf=nbuf, window=window, s2n_fwhm=s2n_width, signif=thresh
@@ -600,6 +599,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
               rfind = where(finstr.slitno eq slitnum and $
                             finstr.color eq 'R', rfindcnt)
               rfin.slitfile = finstr[rfind[0]].slitfile
+              rfin.nrows = finstr[rfind[0]].nrows
               bfin = finstr[bdex]
           endif
           if rcnt gt 0 and bcnt eq 0 and slitcnt gt 0 then begin
@@ -608,6 +608,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
               bfind = where(finstr.slitno eq slitnum and $
                             finstr.color eq 'B', bfindcnt)
               bfin.slitfile = finstr[bfind[0]].slitfile
+              bfin.nrows = finstr[bfind[0]].nrows
               rfin = finstr[rdex]
           endif
 ; combine this with the final structure array.
@@ -719,7 +720,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
           plothist, seediff, bin=binsz, thick=2, xthick=1.5, ythick=1.5, $
             charsize=1.5, xtitle='(fwhm!U2!N!X - cat_fwhm!U2!N!X)', $
             ytitle='Number (Total = ' + string(cnt, format='(1I0)') + ')', $
-          title=mask + ' (blue side)', /xstyle, xr=[lilx,bigx]
+            title=mask + ' (blue side)', /xstyle, xr=[lilx,bigx]
           oplot, xhist, yfit, thick=2, line=2, color=2
           legend, ['Amplitude = ' + string(a[0], format='(F6.2)'), $
                    'x0 = ' + string(a[1], format='(F6.2)'), $
@@ -874,14 +875,8 @@ pro do_extract, files=files, nonlocal=nonlocal, $
     sxaddpar, hdr, 'SeeDiffR', rsd, 'Seeing Diff (arcsec)'
 
 ; write the object information structure into a fits file.
-  objinfolist = findfile('obj_info*', count=objcount)			;ADDED BL 7/2/09 so that when reducing multiple instances
-  if objcount gt 0 then begin						;of the same mask with different chip subsets, the
-        countstring = strcompress(string(objcount+1), /remove_all)	;obj_info file isn't overwritten, have to concatenate all
-   	objfile = 'obj_info.' + mask + '.' + countstring + '.fits'	;obj_info files at the end for zspec to work
-       	mwrfits, finstr, objfile, hdr, /silent, /create
-  endif else begin
-  	mwrfits, finstr, objfile, hdr, /silent, /create
-  endelse
+  mwrfits, finstr, objfile, hdr, /silent, /create
+
 
 ; if we are extracting from the non-local-sky-subtracted extension,
 ; then read back in the obj_info data.
@@ -972,6 +967,14 @@ pro do_extract, files=files, nonlocal=nonlocal, $
                 posB = finstr[bdex].cat_objpos $
               else posB = finstr[bdex].objpos
           endelse
+; Force the posB value to be < the nrows value. 
+; Some masks are crashing due to this error. I'm not sure why an
+; object (serendip) would have an objpos > nrows. That needs to be
+; investigated. 
+          if posB ge finstr[bdex].nrows then posB = finstr[bdex].nrows - 4
+; Force the posB value to be > 0. Again, some masks are crashing due
+; to negative position values. Not sure why exactly.
+          if posB lt 0 then posB = 3
       endif
       if rcnt gt 0 then begin
           if finstr[rdex].objpos gt 0 and $
@@ -986,6 +989,9 @@ pro do_extract, files=files, nonlocal=nonlocal, $
                 posR = finstr[rdex].cat_objpos $ 
               else posR = finstr[rdex].objpos
           endelse
+; check the position on the red side for the same reason.
+          if posR ge finstr[rdex].nrows then posR = finstr[rdex].nrows - 4
+          if posR lt 0 then posR = 3
       endif
       
 ; get the extraction widths. if the signal-to-noise is poor, then use
@@ -1049,28 +1055,28 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; tophat (or boxcar) extraction algorithm.
       if bcnt gt 0 then begin
           if keyword_set(nonlocal) then begin
-              blu_opt = extract1d(bfile, posB, fwhmB, /horne, $
+              blu_opt = extract1d2(bfile, posB, fwhmB, /horne, $
                                   /nonlocal, nsigma=nsig_opt)
-              blu_box = extract1d(bfile, posB, avgfwhmB, $
+              blu_box = extract1d2(bfile, posB, avgfwhmB, $
                                   /nonlocal, nsigma=nsig_box)
           endif else begin
-              blu_opt = extract1d(bfile, posB, fwhmB, /horne, $
+              blu_opt = extract1d2(bfile, posB, fwhmB, /horne, $
                                   nsigma=nsig_opt)
-              blu_box = extract1d(bfile, posB, avgfwhmB, $
+              blu_box = extract1d2(bfile, posB, avgfwhmB, $
                                   /boxsprof, nsigma=nsig_box)
           endelse
       endif
 ; similarly, extract the red spectrum.
       if rcnt gt 0 then begin
           if keyword_set(nonlocal) then begin
-              red_opt = extract1d(rfile, posR, fwhmR, /horne, $
+              red_opt = extract1d2(rfile, posR, fwhmR, /horne, $
                                   /nonlocal, nsigma=nsig_opt)
-              red_box = extract1d(rfile, posR, avgfwhmR, /boxsprof, $
+              red_box = extract1d2(rfile, posR, avgfwhmR, /boxsprof, $
                                   /nonlocal, nsigma=nsig_box)
           endif else begin
-              red_opt = extract1d(rfile, posR, fwhmR, /horne, $
+              red_opt = extract1d2(rfile, posR, fwhmR, /horne, $
                                   nsigma=nsig_opt)
-              red_box = extract1d(rfile, posR, avgfwhmR, $
+              red_box = extract1d2(rfile, posR, avgfwhmR, $
                                   /boxsprof, nsigma=nsig_box)
           endelse
       endif

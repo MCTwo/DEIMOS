@@ -55,11 +55,7 @@ function deimos_edge_offset, xpos1, xpos2, ypos1, ypos2, specimage, $
   for i=0, nslits-1 do begin 
      x0 = (xpos1[ny/2, i] < xpos2[ny/2, i] ) < nx-1
      x1 = (xpos2[ny/2, i] > xpos1[ny/2, i] ) > 0
-     ediff = float(round(x1) - round(x0))
-     if ediff lt 4 then $
-       fakeprof[round(x0+floor(ediff/2)) > 0: $
-                round(x1-floor(ediff/2)) < (nx-1)] = 1 $
-     else fakeprof[round(x0+2) > 0: round(x1-2) < (nx-1)] = 1
+     fakeprof[round(x0+2) > 0: round(x1-2) < (nx-1)] = 1
   endfor
 
 
@@ -90,7 +86,7 @@ function deimos_edge_offset, xpos1, xpos2, ypos1, ypos2, specimage, $
   npoly = 3
   mintofit=(bestidx+5) - 2 > 0
   maxtofit=(bestidx+5) + 2 < (n_elements(lags) -1)
-;stop
+
   shiftfit=poly_fit(lags[mintofit:maxtofit], $
                                cc[mintofit:maxtofit], npoly-1, $
                                sigma=err)

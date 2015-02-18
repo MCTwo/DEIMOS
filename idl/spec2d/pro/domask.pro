@@ -8,7 +8,7 @@
 
 ; MD & DPF
 
-pro domask, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky, skipcalib=skipcalib	;BL added slitcat 5/12
+pro domask, planfile, chiplist=chiplist, nlsky=nlsky
 
 
 
@@ -33,22 +33,8 @@ pro domask, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky, skipcalib
 
 
 ; write calibSlit files
-  if n_elements(slitcat) ne 0 then begin		;BL added 5/12, slitlist is a list of long integers passed to deimos_mask_calibrate
-     readcol, slitcat, format='L', slitlist
-     print, 'WARNING: Only Reducing Slits ', slitlist
-  endif	
- 
-  calib_test = findfile('/Volumes/Data2/orelse/lemaux/deimos/1429/1429A/*/calib*.fits', count=filecount)			;Added BL 5/13, skip making calibSlit files if they're already made, will skip also if it crashed at a slit later than 50
-  if n_elements(skipcalib) gt 0 then begin
-  	print, 'narf', n_elements(skipcalib)
-	if filecount lt 20 then begin								
-  	deimos_mask_calibrate, planfile, /noplot, chiplist=chiplist, slitlist=slitlist
-	endif else begin
-	print, 'Skiping calibration frames, you have written enough to satisfy me...'
-	endelse
-  endif else begin
-  	deimos_mask_calibrate, planfile, /noplot, chiplist=chiplist, slitlist=slitlist
-  endelse
+  deimos_mask_calibrate, planfile, /noplot, chiplist=chiplist
+
 
 ; write spSlit files
   deimos_2dreduce, planfile
