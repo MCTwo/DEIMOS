@@ -66,19 +66,9 @@ pro deimos_traceall, chipno, flatimage, flativar, $
      print, 'DEIMOS_TRACEALL:  You should really set flativar!'
   endif else ivar = flativar NE 0  ; treat as mask (1=good) for now
 
-
-; determine gap between slitlets for smoothing later
-  diffs=model.xb-shift(model.xt,1)
-  gooddiff=where(lindgen(n_elements(diffs)) NE 0 AND diffs ne 0,ct)
-  if ct gt 2 then gap=median(diffs[gooddiff],/even) else gap=5.
-  gap = gap > 3
-  gap = gap < 45
-
 ; -------- Find some traces - ncoeff=4 means third order fit 
   deimos_trace_crude, flatimage, tset1, tset2, flatbin, ybin=ybin, ncoeff=4, $
-    invvar=ivar,gap=gap
-
-
+    invvar=ivar
 
 ; -------- reject traces with strange (don't match neighbors) coefficients
   ntset=(size(tset1.coeff, /dimens))[1] < (size(tset2.coeff, /dimens))[1]

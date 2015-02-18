@@ -17,8 +17,7 @@
 ;   nmed       - y-direction median of nmed pixels before detection
 ;   ybin       - bin in y by a factor of ybin to speed up.  [4]
 ;   ncoeff     - number of coefficients to use in traceset fit. 
-;   gap        - typical gap between slits, in pix                
-;
+;                
 ; OUTPUTS:
 ;   tset1      - trace set structure for "left" traces
 ;          tset1 = $
@@ -60,16 +59,13 @@
 ;-
 ;------------------------------------------------------------------------------
 pro deimos_trace_crude, im, tset1, tset2, imgbin, $
-        invvar=invvar_in, nmed=nmed, ybin=ybin, ncoeff=ncoeff, model=model, $
-                        gap=gap
+        invvar=invvar_in, nmed=nmed, ybin=ybin, ncoeff=ncoeff
 
   nx = (size(im, /dimens))[0]
   ny = (size(im, /dimens))[1]
 
   if not keyword_set(ncoeff) then ncoeff = 4
   if not keyword_set(ybin) then ybin = 4   ; y bin factor
-  if n_elements(gap) eq 0 then gap=4
-
   imgbin = rebin(im, nx, ny/ybin)
 
   if not keyword_set(invvar_in) then invvar = $
@@ -86,27 +82,7 @@ pro deimos_trace_crude, im, tset1, tset2, imgbin, $
 ;   35/2 pix apart...
 
   ystart = ny/ybin/2
-
-
-    useful = where(smooth(reform(imgmed[*, ystart]), 101) gt 1000., usect)
-    if usect lt 100 then useful = lindgen(nx)
-    useflag=intarr(nx)
-    useflag[useful]=1
-   
-
-; make sure we still can find derivatives if the mask doesn't extend all
-; the way to edge
-  baselevel=djs_median(imgmed[*,ystart], width=8*fix(gap)+1,boundary='reflect')
-  print,'Smoothing to fix base level: ',8*fix(gap)+1,' pix'
-
-  if usect lt n_elements(baselevel) then begin 
-      lessuseful=1-dilate(useflag eq 0,intarr(101)+1)
-      lessuseful=lessuseful*useflag
-      if total(lessuseful) gt 100 and total(lessuseful eq 0) gt 0 then $
-    baselevel[where(lessuseful eq 0)]=min(baselevel[where(lessuseful eq 1)])
-  endif
-
-  rat = imgmed[*,ystart]/baselevel
+  rat = imgmed[*,ystart]/median(imgmed[*,ystart], 35)
   drat = shift(rat, -1)-shift(rat, 1)
   drat_cut = 0.15 ; 15 percent change per 2pix required. 
 
@@ -114,26 +90,16 @@ pro deimos_trace_crude, im, tset1, tset2, imgbin, $
   edgeivar = float(shift(invvar, -1) AND shift(invvar, 1))
   edgeivar = edgeivar > 1.0E-3
 
-
- 
   yrow = edge[*, ystart]
-
-   thresh = 5*djsig(yrow[useful])
-
+  thresh = 5*djsig(yrow)
   print, 'Slit edge trace thresh: ', thresh
-
-
 
 ; Get the "crude" trace
   xset = trace_crude((-edge)>0, edgeivar, ystart=ystart, radius=4, $
                    thresh=thresh, yset=yset, xerr=xerr, maxshifte=0.05*ybin)
+
   ind = xset[ystart, *]
-
-  dratcompare=drat[round(ind)]<drat[round(ind)-1]
-  dratcompare=dratcompare<drat[round(ind)+1]
-  w = where(dratcompare LT -drat_cut, ngood)
-
-
+  w = where(drat[round(ind)] LT -drat_cut, ngood)
   if ngood eq 0 then message, 'we are in deep trouble...'
   xset = xset[*, w]
   xerr = xerr[*, w]
@@ -142,19 +108,11 @@ pro deimos_trace_crude, im, tset1, tset2, imgbin, $
     xmax=ny-1,/SILENT
 ;reversed, 9/17/02 MD
 
-
-
 ; -------- 
   xset = trace_crude(edge>0, edgeivar, ystart=ystart, radius=4, $
                    thresh=thresh, yset=yset, xerr=xerr, maxshifte=0.05*ybin)
   ind = xset[ystart, *]
-
-
- dratcompare=drat[round(ind)]>drat[round(ind)-1]
-  dratcompare=dratcompare>drat[round(ind)+1]
-  w = where(dratcompare GT drat_cut, ngood)
-
-
+  w = where(drat[round(ind)] GT drat_cut, ngood)
   if ngood eq 0 then message, 'we are in deep trouble...'
   xset = xset[*, w]
   xerr = xerr[*, w]

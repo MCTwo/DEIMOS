@@ -35,7 +35,7 @@ function spec2d_version
 
    ; The following expression in dollar signs is expanded by CVS
    ; and replaced by the tag name for this version.
-   name = '$Name:  $'
+   name = '$Name: v1_1_4 $'
 
    words = str_sep(strcompress(name), ' ')
 

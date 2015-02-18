@@ -108,20 +108,14 @@ endfor
   isdeep = total(stregex(objnames,'^[0-9]{7}$') LT 0) EQ 0
 
   issky = slitwid*0
-  issn=issky
 
   if isdeep then begin
 
      issky = (long(objnames) MOD 1E6) ge 5E5
-     issn = (long(objnames)/long(1D7) eq 6)
   endif
 
   
   slitnumbers = slitnames[where(isastar)]
-
-
-  if n_elements(mags) eq 0 OR max(mags) lt 22 OR min(mags) gt 24. $
-    then mags=23.+randomu(seed,nslit)
 
 ; don't want first or last slit!
   sortbright = sort(mags+1E10*isastar+1E10*issky $
@@ -146,11 +140,7 @@ endfor
  score = score +5*(long(slitnames) le 10)+5*(long(slitnames) ge (nslit-11)) ;don't want first/last slits
 ; don't want slits at edges of chips
  score = score+5*(medx lt 75)+5*(medx gt 1972)
- 
 
-; keep SNE
-  snslits=where(issn,ct)
-  if ct gt 0 then slitnumbers=[slitnumbers,slitnames[snslits]]
 
   sortscore = slitnames[sort(score)]
   magscore = mags[sort(score)]

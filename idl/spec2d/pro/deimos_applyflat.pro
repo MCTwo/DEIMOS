@@ -38,7 +38,7 @@ function deimos_applyflat, spec, flat2d, slitfn, invvar= invvar, quick=quick
 ;-
 
   if (NOT keyword_set(invvar)) then invvar=float(spec)*0.+1.
-  if n_elements(quick) eq 0 then quick=0
+           
 
   nn = (size(spec))[2] ;spatial range
   mm = (size(spec))[1] ;spectral range

@@ -115,8 +115,6 @@ FUNCTION find_object, slitfile,  $
     RETURN, 0
   ENDIF
 
-
-; Set up keywords
   IF n_elements(usetilt) eq 0 then usetilt = 1
   if n_elements(skyprofile) eq 0 then skyprofile = 0
   if n_elements(interp) eq 0 then interp = 1
@@ -210,8 +208,6 @@ FUNCTION find_object, slitfile,  $
   nearvig = (slit.infomask AND 1b) eq 1b
   crmaskin = (slit.infomask AND 8b) eq 8b
 
-
-; select subregion
   if maxcol-mincol gt 100 then begin
     flux = flux[mincol:maxcol, *]
     lambda = lambda[mincol:maxcol, *]
@@ -429,17 +425,14 @@ FUNCTION find_object, slitfile,  $
 
      if skyprofile  then ivarweight = 0
 
-; establish weight array (IVAR in simplest case)
      weight = ivar[minpix:maxpix, *]
 
-     if NOT ivarweight then weight = $
-       (badregions[minpix:maxpix, *] eq 0b)*(ivar[minpix:maxpix, *] NE 0)
+     if NOT ivarweight then weight = (badregions[minpix:maxpix, *] eq 0b)
 
      if skyprofile and bspline then weight = weight* $
        dilate(((skymodel[minpix:maxpix, *]-median(skymodel) gt 40)), $
         intarr(7, 7)+1)
 
-; make the 1-d profile
      profivar = total(skylinemask[minpix:maxpix, *]*weight, 1)
 
      sprof = total(flux[minpix:maxpix, *]*skylinemask[minpix:maxpix, *] $
@@ -448,7 +441,6 @@ FUNCTION find_object, slitfile,  $
      if not ivarweight then profivar = $
        total(skylinemask[minpix:maxpix, *]*ivar[minpix:maxpix,*], 1)
 
-     
    endif else begin
 
 ; begin non-interpolated scenario
@@ -504,11 +496,7 @@ FUNCTION find_object, slitfile,  $
 
   errlabel = 0
 ;;; DEFINE THE COLUMNS TO USE. 
-  use = WHERE(LINDGEN(ncols) GT nbuf AND LINDGEN(ncols) LT (ncols-nbuf-1) $
-             AND profivar NE 0,usect)
-  if usect eq 0 then $
-    use=WHERE(LINDGEN(ncols) GT nbuf AND LINDGEN(ncols) LT (ncols-nbuf-1))
-
+  use = WHERE(LINDGEN(ncols) GT nbuf AND LINDGEN(ncols) LT (ncols-nbuf-1))
 
   CATCH, errlabel
   IF errlabel LT 0 THEN BEGIN
@@ -543,10 +531,7 @@ FUNCTION find_object, slitfile,  $
         modeout=MIN(sprof[whuse])
         sprof = sprof-modeout*(whct ne 0)
      endif
-     sprof=sprof*(profivar NE 0)
   endif else begin
- 
-; this algorithm finds the background level for an alignment star (nontrivial)
      ddprof = deriv(deriv(sprof))
      nprof = n_elements(ddprof)
      left = min(where(ddprof lt 0 AND shift(ddprof, -1) gt 0))

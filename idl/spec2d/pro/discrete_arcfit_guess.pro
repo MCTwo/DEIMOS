@@ -69,12 +69,12 @@ function discrete_arcfit_guess, spec, lambda, grating, lambda_c, $
      if color eq 'blue' then acoeff = [lambda_c-661., 661., 2., 0.,0.,0.]
      if color eq 'red'  then acoeff = [lambda_c+643., 643., -6, 0.,0.,0.]
   endif 
-  if grating eq 830 then begin 
+  if floor(grating) eq 831 then begin 
      ; don't know about these...
      pixscale = .460 * 2048.
 
-     acoeff = [lambda_c-pixscale, pixscale, 2., -0.,0.,0.] ; 831? l/mm grating
-     if color eq 'red' then acoeff = [lambda_c+pixscale, pixscale, -6., -0.,0.,0.] 
+     acoeff = [lambda_c-pixscale, pixscale, 5.74377, -0.83365,0.,0.] ; 831? l/mm grating
+     if color eq 'red' then acoeff = [lambda_c+pixscale, pixscale, -5.4546, -0.9348,0.,0.] 
   endif 
   if grating eq 900 then begin
 ;     if color eq 'blue' then acoeff = [lambda_c-881, 0.40*2048, 5.,

@@ -30,84 +30,31 @@
 
 pro quick_science, level,  newfile
    
-err=''
-
   if n_elements(level) eq 0 then level = 2
   if n_elements(newfile) eq 0 then begin
      spawn, 'rsh polo wfi', newfile
-     newfile = newfile[0]
-     h = headfits('/net/polo'+newfile,err=err)
-  endif else begin
-     newfile = newfile[0]
-     h = headfits('/net/polo'+newfile,err=err)
-  endelse 
-
-  if strlen(newfile) lt 5 or strlen(err) gt 0 then begin
-      print,'Warning: Filename from wfi was blank or bad'
-      mask='  '
-      isscience=0
-      wrongmode=0
-      
-  endif else begin
-    
-      mask = sxpar(h, 'SLMSKNAM')
-      lamps = sxpar(h, 'LAMPS')
-      exptime = sxpar(h, 'EXPTIME')
-      obstype = sxpar(h, 'OBSTYPE')
-      grating = sxpar(h, 'GRATENAM')
-      object = sxpar(h, 'OBJECT')
-      gratepos = sxpar(h, 'GRATEPOS')
-      hatchpos = sxpar(h, 'HATCHPOS')
-      if gratepos eq 3 then wave = sxpar(h, 'G3TLTWAV') $
-         else wave = sxpar(h, 'G4TLTWAV') 
-      mosmode=sxpar(h,'MOSMODE')
+     h = headfits('/net/polo'+newfile)
+  endif else h = headfits('/net/polo'+newfile)
+  
+  mask = sxpar(h, 'SLMSKNAM')
+  lamps = sxpar(h, 'LAMPS')
+  exptime = sxpar(h, 'EXPTIME')
+  obstype = sxpar(h, 'OBSTYPE')
+  grating = sxpar(h, 'GRATENAM')
+  object = sxpar(h, 'OBJECT')
+  gratepos = sxpar(h, 'GRATEPOS')
+  hatchpos = sxpar(h, 'HATCHPOS')
+  if gratepos eq 3 then wave = sxpar(h, 'G3TLTWAV') $
+    else wave = sxpar(h, 'G4TLTWAV') 
 
 
-      isscience =  strpos(lamps, 'Off') ge 0 $ 
-        AND exptime gt 250. $
-        AND strpos(obstype, 'Object') ge 0 $
-        AND wave gt 5000 $
-        AND strpos(hatchpos, 'open') ge 0 $
-        AND mosmode eq 'Spectral'
-
-; to trap errors like 18 June 2004
-
-      wrongmode =  strpos(lamps, 'Off') ge 0 $ 
-        AND exptime gt 250. $
-        AND strpos(obstype, 'Object') ge 0 $
-        AND wave gt 5000 $
-        AND strpos(hatchpos, 'open') ge 0 $
-        AND mosmode NE 'Spectral'
-  endelse
-
-
-if wrongmode then begin
-
-       spawn,'whoami',account
- 
-       spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh.au &'
-
-       spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
-
-    openw, 2, '/home/'+account+'/temp/error.txt'
-              printf, 2
-              printf, 2, 'Warning: Check if you are in spectral readout mode!'
-    close,2
-
-     spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &' 
-
-
-
-     spawn, spawnstring
- endif
-
-; and now back to the usual routine
+  isscience =  strpos(lamps, 'Off') ge 0 $ 
+    AND exptime gt 250. $
+    AND strpos(obstype, 'Object') ge 0 $
+    AND wave gt 5000 $
+    AND strpos(hatchpos, 'open') ge 0
 
   mask = strcompress(mask, /REMOVE)
-; deal with SN or ERO masks
-
-
-;  if strlen(mask) gt 6 then mask = strmid(mask, 0, 6)
 
      maskprocessed = n_elements(findfile(mask+'/arc*')) ge 4 $
        AND n_elements(findfile(mask+'/cal*')) ge 10
@@ -136,20 +83,12 @@ if wrongmode then begin
 ;            format='(i2)')+'" | idl >> science.log'
             
        deimos_2dreduce, file=filestem, quick=level
-       if file_test('spSlit*.*') eq 1 then begin
-          list=findfile('spSlit*.fits')
-          spslit_combine,list, nlsky = 0
-          slitfiles = findfile('slit*.fits', count=nfiles)
-          
-          do_extract, files=slitfiles, nsigma_optimal=1.75, nsigma_boxcar=1.1 
 
-       endif
        quick_sciqa, quicklevel=level, file=filestem
        cd,cwd
 
     print, 'mask: ', mask, ' completed'
-
-
+    
     endif
 
 

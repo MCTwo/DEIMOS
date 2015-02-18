@@ -34,18 +34,13 @@
 ;-
 
 
-pro check_sn, mask, nomsig=nomsig,  output=output,  nmask=nmask, err=err, nleft=nleft
+pro check_sn, mask, nomsig=nomsig
 
      if n_elements(nomsig) eq 0 then nomsig = 0.9
 
      fileexists =  file_test('science_qa.dat')
-
-;     if fileexists eq 1 then filein = 'science_qa.dat' $
-;        else filein = '../science_qa.dat'
-
-     filein = 'science_qa.dat'
-
-      if fileexists then readcol,  filein,  filename,  masks,  align,  pm1,  $
+     
+      if fileexists then readcol,  'science_qa.dat',  filename,  masks,  align,  pm1,  $
          alignsig,  seeing,  pm2,  seeingsigma,  s2narr,  pm3,  s2nsigma,  $
         skipline=1,  format='A,A,F,A,F,F,A,F,F,A,F',  /SILENT
 
@@ -53,13 +48,9 @@ pro check_sn, mask, nomsig=nomsig,  output=output,  nmask=nmask, err=err, nleft=
       if n_elements(mask) eq 0 then lastmask = masks[nfiles-1] else lastmask = mask
 
       whmask = where(masks eq lastmask,  nmask)
-;      print
-;      print, 'For mask: ', lastmask,  '  there are ', $
-;        string(nmask, form='(i3)'), '  files that have been processed'
-
-      output =  'For mask: '+  string(lastmask)+   '  there are '+  $
-        string(nmask, form='(i3)')+'  files that have been processed'
-
+      print
+      print, 'For mask: ', lastmask,  '  there are ', $
+        string(nmask, form='(i3)'), '  files that have been processed'
 
       whbad = where(finite(s2nsigma) eq 0, badct)
       if badct gt 0 then s2nsigma[whbad] = 0.2
@@ -68,37 +59,21 @@ pro check_sn, mask, nomsig=nomsig,  output=output,  nmask=nmask, err=err, nleft=
 
       print, 'S/N so far:      ', string(s2ntot, form='(f6.3)'), ' +/- ', string(s2nerr, form='(f6.3)')
 
-      output = [output, $
-        'S/N so far:      '+ string(s2ntot,  form='(f6.3)')+  ' +/- '+  string(s2nerr,  form='(f6.3)')]
-
       s2nave = s2ntot/sqrt(nmask)
       aveerr = s2nerr/sqrt(nmask)
 
       print, 'S/N for 3 frames:', string(s2nave*sqrt(3.),  form='(f6.3)'), ' +/- ', $
         string(aveerr*sqrt(3.),  form='(f6.3)')
-      output = [output, 'S/N for 3 frames:'+  string(s2nave*sqrt(3.),   form='(f6.3)')+  ' +/- '  $
-        +string(aveerr*sqrt(3.),   form='(f6.3)')]
+      print, 'Nominal: ', string(nomsig,  form='(f6.3)')
 
-      print, 'Minimum acceptable: ', string(nomsig,  form='(f6.3)')
-      output = [output, 'Minimum acceptable: '+  string(nomsig,   form='(f6.3)')]
 
       nreq = (nomsig/s2nave)^2
       errreq = 2.*nreq*aveerr/s2nave
-      err = errreq
       nleft = nreq-nmask
 
-      print, 'In order to reach the minimum accetable S/N you should take ', $
-             string(nleft > 0,  form = '(f6.2)'), $
-        ' +/- ', string(errreq,  form='(f6.2)'), ' more frames like these'
-
-      output = [output, $
-           'In order to reach the minimum accetable S/N you should take '+  $
-                string(nleft >  0,   form = '(f6.2)')+  $
-        ' +/- '+  string(errreq,   form='(f6.2)')+  ' more frames like these']
-
-      if nmask lt 3 AND nleft lt 1 then print, 'Please take at least 3 frames total, regardless!'
-
-      if nmask lt 3 AND nleft lt 1 then output =  [output, 'Please take at least 3 frames total, regardless!']
+      print, 'It is advisable to take ', string(nleft > 0,  form='(f6.2)'), $
+        ' +/- ', string(errreq,  form='(f6.2)'), ' more frames like the average of these'
+      print
 
 
 return

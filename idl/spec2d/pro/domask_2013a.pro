@@ -1,8 +1,6 @@
 ; top level control script to reduce a mask of DEIMOS data
 ; intended to be run in batch mode
 ; formerly known as reduce_it.pro
-; This is for slider 4 data only, taken prior to May of 2009
-; or subsequent to August 19 of 2009
 
 ; you must CD to the directory you want to run this in. 
 
@@ -10,9 +8,9 @@
 
 ; MD & DPF
 
-pro domask_2013a, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky, skipcalib=skipcalib	;BL added slitcat 5/12
+pro domask_2013a, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky ;WD added slitcat 10/2013
 
-
+  if n_elements(nlsky) eq 0 then nlsky = 1
 
   if n_params() eq 0 then begin
     planfile = findfile('*.plan')
@@ -30,27 +28,15 @@ pro domask_2013a, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky, ski
 ; read bin tables from raw frame and store as .fits file.
   make_bintab_file, planfile
 
-  deimos_isdeep,isdeep
-  if n_elements(nlsky) eq 0 then nlsky = (isdeep eq 1)
-
 
 ; write calibSlit files
-  if n_elements(slitcat) ne 0 then begin		;BL added 5/12, slitlist is a list of long integers passed to deimos_mask_calibrate
+  if n_elements(slitcat) ne 0 then begin    ;BL added 5/12, slitlist is a list of long integers passed to deimos_mask_calibrate
      readcol, slitcat, format='L', slitlist
      print, 'WARNING: Only Reducing Slits ', slitlist
-  endif	
- 
-  calib_test = findfile('*calib*.fits', count=filecount)			;Added BL 5/13, skip making calibSlit files if they're already made, will skip also if it crashed at a slit later than 50
-  if n_elements(skipcalib) gt 0 then begin
-  	print, 'narf', n_elements(skipcalib)
-	if filecount lt 20 then begin								
-  	deimos_mask_calibrate_2013a, planfile, /noplot, chiplist=chiplist, slitlist=slitlist      ;Modified WD 2013/10/09, call a modified version of deimos_mask_calibrate_oldslider4 that has a differnet intial guess for the wavelength solution (suggested by Michael Cooper)
-	endif else begin
-	print, 'Skiping calibration frames, you have written enough to satisfy me...'
-	endelse
-  endif else begin
-  	deimos_mask_calibrate_2013a, planfile, /noplot, chiplist=chiplist, slitlist=slitlist        ;Modified WD 2013/10/09, call a modified version of deimos_mask_calibrate_oldslider4 that has a differnet intial guess for the wavelength solution (suggested by Michael Cooper)
-  endelse
+  endif
+  
+  deimos_mask_calibrate_withsky_2013a, planfile, /noplot, chiplist=chiplist, slitlist=slitlist ;25 Oct 2013 WD, called a modified version of the calibrate code that includes adjustments to the initial wavelength solution guess, also added slitlist
+
 
 ; write spSlit files
   deimos_2dreduce, planfile
@@ -106,7 +92,7 @@ pro domask_2013a, planfile, slitcat=slitcat, chiplist=chiplist, nlsky=nlsky, ski
   else begin
       if strpos(strupcase(maskname), 'KTRS') ge 0 then $
         do_extract, files=slitfiles, nsigma_optimal=1.75, nsigma_boxcar=1.5 $
-      else do_extract, files=slitfiles, nsigma_optimal=1.75, nsigma_boxcar=1.1+0.4*(grating eq 600.)
+      else do_extract, files=slitfiles, nsigma_optimal=1.75, nsigma_boxcar=1.1
   endelse
 
 ; do 1d extraction w/ non-local sky

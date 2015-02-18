@@ -46,9 +46,7 @@
 ;
 ;----------------------------------------------------------------------
 function deimos_read_1amp, fname, hno, nobias=nobias, norotate=norotate, $
-               satmask=satmask, detsec=detsec, header=header,quick=quick
-
-if n_elements(quick) eq 0 then quick=0
+               satmask=satmask, detsec=detsec, header=header
 
 ; -------- Read in the image from that header as unsigned int (if approp)
   fullimage = mrdfits(fname, hno, /unsigned, /silent)
@@ -69,7 +67,7 @@ if n_elements(quick) eq 0 then quick=0
         print, '  File name: ', fname
         print, '  Header number:', hno
         print, '  DATASUM (header):', datasum, '    computed checksum:', sum32
-        print, 'Data may be corrupted!!'	; changed 11/18/09 BL, didn't want it crashing on checksum (because of a 1429B file), changed message-> print
+        message, 'Data may be corrupted!!'
      endif else begin 
         print, 'CHECKSUM correct: ', sum32
      endelse 
@@ -97,7 +95,7 @@ if n_elements(quick) eq 0 then quick=0
         print, '  File name: ', fname
         print, '  Header number:', hno
         print, '  Computed header checksum (should be 4294967295):', headsum
-        print, 'Corrupted file header!!'	; changed 11/18/09 BL, didn't want it crashing on checksum (because of a 1429B file), changed message-> print
+        message, 'Corrupted file header!!'
      endif else begin 
         print, '  Header intact'
      endelse
@@ -134,35 +132,8 @@ if n_elements(quick) eq 0 then quick=0
 ; -------- Bias subtract (unless requested not to) (before rotation!)
 ;               We should make this position dependent. 
   if (NOT keyword_set(nobias)) AND israwdata then begin
-
-      over=float(over)
-      s=size(over,/DIM)
-      nover=s[0]
-      ny=s[1]
-
-      if quick eq 1 then biasdrift=0 else begin
-; if variation >2.*noise, bias subtract row-by-row
-          biasdrift=djsig(over[nover/2,*]) gt $
-            2./sqrt(2)*djsig(over[nover/2-1,*]-over[nover/2+1,*])
-
-          if biasdrift then $
-            message,'WARNING: Appears to be a bias drift.  Attempting correction.',/INFO
-      endelse
-
-      if biasdrift eq 0 then begin
-          djs_iterstat, over,  mean=bias, sigrej=5.
-      endif else begin
-          bias=fltarr(ny)
-           for k=0,ny-1 do begin
-               djs_iterstat, over[*,k],  mean=tmpbias, sigrej=5.
-               bias[k]=tmpbias
-           endfor
-           bias=(fltarr(x[1]-x[0]+1) +1.) # bias
-
-      endelse    
-
-      image = image- bias
-
+     djs_iterstat, over,  mean=bias, sigrej=5.
+     image = image- bias
   endif
 
 ; -------- Rotate (unless requested not to)
@@ -204,7 +175,7 @@ function deimos_read_chip, fname, chipno, satmask=satmask, nobias=nobias, $
 ;read subimage
   hdu = (single ? 1 : 2)*(chipno) ; 1,3,5... or 1,2,3...
   subimage = deimos_read_1amp(fname, hdu, nobias=nobias, norotate=norotate, $
-       satmask=satmask, detsec=detsec, header=header,quick=quick)
+       satmask=satmask, detsec=detsec, header=header)
 ;convert to electrons
 ;does this work in 8 amp as well as 16 amp mode??
 

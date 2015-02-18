@@ -4,8 +4,7 @@ bad = 0
 s2nlimit = 0.4
 
       fileexists = file_test('../science_qa.dat')
-      if fileexists then readcol, '../science_qa.dat', filename, $ 
-        masks, align, pm1, alignsig, seeing, pm2, seeingsigma, s2narr, pm3, s2nsigma, $
+      if fileexists then readcol, '../science_qa.dat', filename, masks, align, pm1, alignsig, seeing, pm2, seeingsigma, s2narr, pm3, s2nsigma, $
         skipline=1, format='A,A,F,A,F,F,A,F,F,A,F', /SILENT
 
       if fileexists then bestseeing = min(seeing) else bestseeing = 999.
@@ -16,14 +15,8 @@ if n_elements(quicklevel) eq 0 then quicklevel = 2
 if n_elements(silent) eq 0 then silent = 0
 
 
-spawn,'whoami',account
-
-spawn, 'mkdir /home/'+account+'/temp'
-
-
-
 qlfiles = findfile('quick*.fits',  count=count)
-fits_info, qlfiles[count/2], /SILENT, n_ext=next
+fits_info, qlfiles[0], /SILENT, n_ext=next
 if quicklevel lt 2 then bspline = 1 else bspline = 0
 
 ;hdu = next/(1+bspline)
@@ -47,14 +40,8 @@ nspec=intarr(nchips)
 
 for i=0,nchips-1 do nspec[i]=total(chiparr eq uchips[i])
 
-
-srtdx = udx[sort(udx)]
-
 meddxs = string(median(dxarr,/even), format='(f6.3)')
-sigdx=stdev(srtdx[0:n_elements(srtdx)-2])
-sigdxs = string(sigdx, format='(f6.3)')
-
-
+sigdxs = string(djsig(dxarr), format='(f6.3)')
 
   bfile = '*bintab*.fits'
   bfile = bfile[0] 
@@ -67,19 +54,17 @@ simple_tables, bfile, slitnames=slitnames, mags=magall, slitwid=slitwid, $
 whalign = where(slitwid gt ( 1.2*median(slitwid) > 3.), nalign)
 
 
-for i=0, nalign-1 do begin 
+for i=0, nalign-1 do begin
    wh = where(strpos(qlfiles, $
-          strcompress('.'+slitnames[whalign[i]]+'B', /REMOVE)) ge 0 $
-              OR strpos(qlfiles, $
-          strcompress('.'+slitnames[whalign[i]]+'R', /REMOVE)) ge 0, whct) 
+          strcompress('.'+slitnames[whalign[i]], /REMOVE)) ge 0, whct)
           if whct gt 0 then if n_elements(alignfiles) eq 0 then $
             alignfiles = qlfiles[wh] $
-          else alignfiles = [alignfiles, qlfiles[wh]] 
+          else alignfiles = [alignfiles, qlfiles[wh]]
 endfor
 
 issci = fltarr(n_elements(qlfiles))
 
-for i=0, n_elements(qlfiles) - 1 do begin 
+for i=0, n_elements(qlfiles) - 1 do begin
    issci[i] = total(alignfiles eq qlfiles[i]) eq 0.
 endfor
 
@@ -116,8 +101,8 @@ djs_iterstat, peaks[whb]-centers[whb], median=medshiftb, sigma=sigshiftb
 djs_iterstat, peaks[whr]-centers[whr], median=medshiftr, sigma=sigshiftr
 djs_iterstat, fwhms[whb], median=medfwhmb, sigma=sigfwhmb
 djs_iterstat, fwhms[whr], median=medfwhmr, sigma=sigfwhmr
-djs_iterstat, peaks-centers, median=medshift, sigma=sigshift, sigrej=2
-djs_iterstat, fwhms, median=medfwhm, sigma=sigfwhm, sigrej=2
+djs_iterstat, peaks-centers, median=medshift, sigma=sigshift
+djs_iterstat, fwhms, median=medfwhm, sigma=sigfwhm
 
 medshifts = string(medshift, format='(f6.3)')
 sigshifts = string(sigshift/sqrt(2./3.*(nalign-1)), format='(f6.3)')
@@ -136,14 +121,13 @@ nstar = n_elements(whb) < n_elements(whr)
      stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
      mask = stringsep[n_elements(stringsep)-1]
 
- 
+
 ; if mask might be buckled, alert!
-   if median(dxarr,/even) gt 3.5 OR min(dxarr) gt 3. OR sigdx gt 1.5 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+'/home/deepteam/sounds/doh.au &'
-
-
-            openw, 2, '/home/'+account+'/temp/error.txt'
+   if median(dxarr,/even) gt 2.5 OR min(dxarr) gt 1.5 OR djsig(dxarr) gt 1 then begin
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account deepteam /home/deepteam/sounds/doh.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account deepteam /home/deepteam/sounds/doh.au &'
+  
+            openw, 2, '/home/deepteam/temp/error.txt'
             printf, 2
             printf, 2, 'Warning: Mask may be off FCS position or buckled!'
             printf, 2, 'Mask: '+mask
@@ -159,61 +143,20 @@ nstar = n_elements(whb) < n_elements(whr)
               uchips[i+nchips/2], udx[i], $
               udx[i+nchips/2],nspec[i], form='(I2,A,I2,2f10.3,I10)'
             printf, 2
-            if n_elements(file) eq 0 then begin
-             read_planfile, '*.plan', mask, raw, out, flatnames
-             printf, 2
-             printf, 2, 'To check for buckling, examine the focus and/or the offset between'
-             printf, 2, 'science data and flats on both chips 1 and 4 [or 5 and 8].'
-             printf, 2  
-             printf, 2, 'More specifically, you can try the following commands in an idl window'
-             printf, 2, 'running in the directory the data is being obtained in - you can copy&paste:'
-             printf, 2, 'any or all of the following lines:'
-             printf, 2
-             wh = where(masks eq mask)
-             printf, 2, 'i = 1 ; to look at chip 1, then set i=4 and repeat'
-             printf, 2, "data=deimos_read_chip('"+filename[wh[0]]+"',i) "
-             flatname = strmid(flatnames[0], strlen(raw), strlen(flatnames[0])-strlen(raw))
-             printf, 2, "flat=deimos_read_chip('"+flatname+"',i) "
-             printf, 2
-             printf, 2, ';Then try either: 
-             printf, 2, 'atv,data/flat' 
-             printf, 2, ';In this case, the offset between the slits on the data frame'
-             printf, 2, '; and the flat frame will be visible as the separation between'
-             printf, 2, '; bright,vertical and dark, vertical slit edges.'
-             printf, 2
-             printf, 2, ';Or, try:'
-             printf, 2, 'atv,data'
-             printf, 2, '; and look for whether sky lines appear to be out of focus'
-             printf, 2
-             printf, 2, ';Or (perhaps best) issue the commands'
-             printf, 2, 'splot,total(data[*,1800:2200],2)'
-             printf, 2, 'soplot,flat[*,2000],color=2,line=1'
-             printf, 2
-             printf, 2, ';In this case you should be able to determine the shift between flat'
-             printf, 2, '; and data by eye by the motion of slit edges.'
-             printf, 2, '; Left click to zoom in, right click to zoom out, middle click to recenter.'
-             printf, 2
-             printf, 2, ';Regardless of method used, in a buckled mask, generally '
-             printf, 2, '; the offset between flat and data will depend on chip radically.'
-            endif 
-
             close, 2
-      spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &'
+      spawnstring = 'cat /home/deepteam/temp/error.txt | tkmessage -type warning &'
       if silent lt 2 then spawn, spawnstring
       bad = 1
       endif
 
 
-badseeing = 0
 
 ; if seeing is bad, alert!
    if medfwhm gt 1.1 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account deepteam /home/deepteam/sounds/doh.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account deepteam /home/deepteam/sounds/doh.au &'
   
-      badseeing = 1
-
-            openw, 2, '/home/'+account+'/temp/error.txt'
+            openw, 2, '/home/deepteam/temp/error.txt'
             printf, 2
             printf, 2, 'Warning: Bad seeing!'
             printf, 2, 'Mask: '+mask
@@ -228,7 +171,7 @@ badseeing = 0
               fwhms[whr[i]], form='(A4,2f8.3)'
             printf, 2
             close, 2
-      spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &'
+      spawnstring = 'cat /home/deepteam/temp/error.txt | tkmessage -type warning &'
       if silent lt 2 then spawn, spawnstring
       bad = 1
       endif
@@ -236,11 +179,11 @@ badseeing = 0
 
 
 ; if seeing has degraded, alert!
-   if medfwhm gt (bestseeing+0.3) AND badseeing eq 0 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/doh2.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/doh2.au &'
+   if medfwhm gt (bestseeing+0.3) then begin
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account deepteam /home/deepteam/sounds/doh2.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account deepteam /home/deepteam/sounds/doh2.au &'
  
-            openw, 2, '/home/'+account+'/temp/error.txt'
+            openw, 2, '/home/deepteam/temp/error.txt'
             printf, 2
             printf, 2, 'Warning: Seeing has degraded!'
             printf, 2, 'Mask: '+mask
@@ -258,17 +201,17 @@ badseeing = 0
             printf, 2, 'File:', 'Mask', 'Seeing FWHM:', format='(3A20)'
             for i=0, n_elements(masks)-1 do printf, 2, filename[i], masks[i], '   ', seeing[i], ' +/- ',seeingsigma[i], format='(2A20,A,f6.3,A,f6.3)'
             close, 2
-      spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &'
+      spawnstring = 'cat /home/deepteam/temp/error.txt | tkmessage -type warning &'
       if silent lt 2 then spawn, spawnstring
       bad = 1
       endif
 
 ; if alignment is bad, alert!
    if medshift gt 0.25 then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/STTNG-redalert.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/STTNG-redalert.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account deepteam /home/deepteam/sounds/STTNG-redalert.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account deepteam /home/deepteam/sounds/STTNG-redalert.au &'
 
-            openw, 2, '/home/'+account+'/temp/error.txt'
+            openw, 2, '/home/deepteam/temp/error.txt'
             printf, 2
             printf, 2, 'Warning: Bad alignment offset!'
             printf, 2, 'Mask: '+mask
@@ -283,7 +226,7 @@ badseeing = 0
               peaks[whr[i]]-centers[whr[i]], form='(A4,2f8.3)'
             printf, 2
             close, 2
-      spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &'
+      spawnstring = 'cat /home/deepteam/temp/error.txt | tkmessage -type warning &'
       if silent lt 2 then spawn, spawnstring
       bad = 1
       endif
@@ -322,7 +265,7 @@ blue = blue[whgood]
 
     whb = where(blue, comp=whr)
 
-if silent eq -1 then begin
+if silent lt 3 then begin
 
     window, 0, xs=512, ys=512
     loadct, 12, /SILENT
@@ -340,14 +283,38 @@ endif
       mcc_polyfit, [x1, x2], [y1, y2], [0, 1], a=a
       xfit = [0, 100]
       yfit = a[0] + xfit*a[1]
-     if silent eq -1 then  oplot, xfit, yfit
+     if silent lt 3 then  oplot, xfit, yfit
 
       noms2n = a[0]+23.25*a[1]
       s2nnoise = stdev(s2ns-a[0]-a[1]*mags)/3.
 
-;      print, 'Signal-to-noise at mag. 23.25: ',noms2n , ' +/- ', s2nnoise, ' Nominal: ', s2nlimit, format='(A,f7.3,A,f7.3,A,f7.3)'
+      print, 'Signal-to-noise at mag. 23.25: ',noms2n , ' +/- ', s2nnoise, ' Nominal: ', s2nlimit, format='(A,f7.3,A,f7.3,A,f7.3)'
 
 print
+
+
+; if signal-to-noise is bad, alert!
+  if  (noms2n+s2nnoise) lt s2nlimit then begin
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account deepteam /home/deepteam/sounds/Homer_Scream.au &'
+      if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account deepteam /home/deepteam/sounds/Homer_Scream.au &'
+     cd,current=cwd
+     stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
+     mask = stringsep[n_elements(stringsep)-1]
+
+            openw, 2, '/home/deepteam/temp/error.txt'
+            printf, 2
+            printf, 2, 'Warning: Low signal-to-noise!'
+            printf, 2, 'Mask: '+mask
+            if n_elements(file) ne 0 then printf, 2, 'File: ', file
+            printf, 2
+            printf,2, 'Signal-to-noise at R=23.25: ', noms2n, ' +/- ', s2nnoise, ' arcsec', form='(A,f7.3,A,f7.3,A)'
+            printf, 2
+            printf, 2, 'It is advisable to take extra frames!'
+            close, 2
+      spawnstring = 'cat /home/deepteam/temp/error.txt | tkmessage -type warning &'
+      if silent lt 2 then spawn, spawnstring
+      bad = 1
+      endif
 
 
       if n_elements(file) gt 0 then begin
@@ -360,45 +327,7 @@ print
           close, 2
        endif
 
-    cd, current=cwd
-    cd, '..'
-
-       check_sn, output=output, nleft=nleft, nmask=nmask, err=err
-    cd, cwd  
-
-; if signal-to-noise is bad, alert!
-  if  (noms2n+s2nnoise) lt s2nlimit OR (nmask gt 1 and nleft gt (3-nmask+0.5*err)) then begin
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host hamoa -account '+account+' /home/deepteam/sounds/Homer_Scream.au &'
-      if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 99 -host pohue -account '+account+' /home/deepteam/sounds/Homer_Scream.au &'
-     cd,current=cwd
-     stringsep = strsplit(strcompress(cwd, /REMOVE), '/', /extract)
-     mask = stringsep[n_elements(stringsep)-1]
-
-            openw, 2, '/home/'+account+'/temp/error.txt'
-            printf, 2
-            printf, 2, 'Warning: Low signal-to-noise!'
-            printf, 2, 'Mask: '+mask
-            if n_elements(file) ne 0 then printf, 2, 'File: ', file
-            printf, 2
-            printf,2, 'Signal-to-noise at R=23.25: ', noms2n, ' +/- ', s2nnoise, ' arcsec', form='(A,f7.3,A,f7.3,A)'
-            printf, 2
-            for i=0, n_elements(output)-1 do printf, 2, output[i]
-            close, 2
-      spawnstring = 'cat /home/'+account+'/temp/error.txt | tkmessage -type warning &'
-      if silent lt 2 then spawn, spawnstring
-      bad = 1
-      endif
-
-
-
-      if bad eq 0 then if silent le 0 then spawn, '/home/kics/instr/bin/play_sound -v 49 -host pohue -account '+account+' /home/deepteam/sounds/Homer-Wohoo.au &'
+      if bad eq 0 then if silent eq 0 then spawn, '/home/kics/instr/bin/play_sound -v 49 -host pohue -account deepteam /home/deepteam/sounds/Homer-Wohoo.au &'
 
 return
 end
-
-
-
-
-
-
-

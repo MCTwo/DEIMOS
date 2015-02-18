@@ -166,26 +166,11 @@ function  deimos_tables,  filename,  bluslits=bluslits, slitobjmap=slitobjmap
      
      
   endfor
-
-
-; check for, and throw out, 'ghost' slits
-  whghost=where(desislits.slittyp eq 'G',gct)
-
-  if gct gt 0 then begin
-      baddslitid=desislits[whghost].dslitid
-      desislits=desislits[where(desislits.dslitid NE baddslitid)]
-      bluslits=bluslits[where(bluslits.dslitid NE baddslitid)]
-      if arg_present(slitobjmap) then $
-        slitobjmap=slitobjmap[where(slitobjmap.dslitid NE baddslitid)]
-  endif
-
   if catflag eq 0 then print, 'ERROR: no object catalog in this file'
   if bluflag eq 0 then print, 'ERROR: no blueprint table in this file'
   if desiflag eq 0 then print, 'ERROR: no DesiSlits table in this file'
 ; match slitname to UCB slitname convention, not SYBASE tag
   bluslits.slitno =  long(desislits.slitname) ;copy into bluslits
-
-  if n_elements(catalog) eq 0 then catalog=0
   
   return,  catalog 
 end

@@ -176,7 +176,12 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
   sample = findgen(1E4)*n_elements(slitilluwt)/(1E4+23)
 
   maxerr = max(1./sqrt(slitillumwt[sample]))
- 
+
+;  rollmed=djs_median(slitillum,width=9,boundary='reflect')
+;  bigmed=djs_median(slitillum,width=(31 < n_elements(slitillum)-1),$
+;                    boundary='reflect')
+  
+
 
   niter=2
   i=0
@@ -218,6 +223,8 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
      whgood=where(badslitfngrad eq 0,goodct)
 
      if goodct eq 0 then whgood=whfull
+
+                                ; if okct lt 5 then whgood=where(badslitfngradtmp EQ 0,okct)
 
      djs_iterstat,(slitfnderiv[whgood]),med=medder,sigm=sigder,max=20
      corrslitfn=slitfntot/(1+findgen(nn)*medder)
@@ -278,7 +285,10 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
      else coeff=[1.,0.]
   
 ; fit gradient to top of slitfn
-
+;  coeff = linfit(findgen(nn), slitillum, $
+;                 measure_error = 1./sqrt(slitillumwt)+100*maxerr*badslitfngrad, $
+;                 yfit=yfit)
+;  illumarr = yfit
      illumarr=findgen(nn)*coeff[1]+coeff[0]
 
    endwhile
@@ -359,6 +369,9 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 
 ; pretend it's a weighted average in this line, no biggie  
         
+;    whbad=where(slitfntot eq -1,badct)
+;    if badct gt 0 then slitfnwt[whbad]=1.e-20
+        
         slitillum = slitfntot
         slitillumwt = slitfnwt > 1.e-20
         edge2=edge+4
@@ -377,8 +390,11 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 
 
 ; now that we've thrown out bad pixels, fit gradient to top of slitfn
-        if badregion eq 0 then $  
-           coeff = svdfit(findgen(nn), slitillum/slitfn, 2, $
+        if badregion eq 0 then $
+                                ;coeff = linfit(findgen(nn), slitillum/slitfn, $
+                                ;   measure_error = 1./sqrt(slitillumwt)*slitfn^2, $ ;+100*maxerr*badslitfngrad, $
+                                ;   yfit=yfit) $
+        coeff = svdfit(findgen(nn), slitillum/slitfn, 2, $
                        measure_error = 1./sqrt(slitillumwt)*slitfn^2, $ 
                        yfit=yfit) $
         else coeff=[1.,0.]
@@ -440,6 +456,10 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
         coeff1[whsmooth]=coeff1s[whsmooth]
      endif
 
+
+
+;  slitfnvig=rebin(fullvig,mm/nslitfn,nn)
+
      
      for i=0,nslitfn-1 do yfitarr2[i,*]=coeff0[i]+coeff1[i]*findgen(nn)
 
@@ -480,10 +500,7 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 
      slitfnarr = rebin(medslitfarr, mm, nn)
 
-; don't trust (spectral) ends of the 2d slit function
      varslitfn = medslitfarr
-     varslitfn[0:1,*]=(fltarr(2)+1) # varslitfn[2,*]
-     varslitfn[62:63,*]=(fltarr(2)+1) # varslitfn[61,*]
 
 
 ; -------- Fringe pattern
@@ -521,13 +538,14 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
      flat2d = flat2d/median(flat2d[mm/2-ncol:mm/2+ncol-1, *])-1. 
 
 ; don't muck with bad data
-
+;  if badct gt 0 then slitfnarr[where(badslitfn)] = 1.
      flat2d[*,0]=0.
      flat2d[*,nn-1]=0.
      flat2d[0:16,*]=0.
      flat2d[mm-17:mm-1,*]=0.
 
 ; don't throw out data at edges yet!
+;  badslitfnarr=badslitfnarr OR slitfnarr LT 0.8 OR slitfnarr GT 1.2
 
      mask = (fringe GT 0.8) AND (fringe LT 1.2) AND (badslitfnarr EQ 0) 
      mask[0:3, *] = 0B
@@ -546,7 +564,12 @@ pro deimos_makeflat, flat_image, flat2d, flat1d, vigcorr = vigcorr, varslitfn = 
 
    endif else begin
 
+;  badslitfnarr =  (1+intarr(mm)) # badslitfn
 
+
+;  illumarr  = (1+fltarr(mm)) # yfit
+;  slitfnarr = (1+fltarr(mm)) # slitfn
+;  badslitfnarr = (1+intarr(mm)) # badslitfn
       if n_elements(slitfn) gt 0 then flat1d = slitfn $
         else flat1d = badslitfngrad*0+1.
       flat2d = ivar*0.

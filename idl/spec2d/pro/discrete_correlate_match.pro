@@ -38,17 +38,7 @@ function discrete_correlate_match, x1, x2_in, step=step, lag=lag
 
 ; -------- PASS 1: get offset between x1 and x2
   nbest = long(n_elements(x1) * .85)
-
-; an experiment
-;  box=max(abs(lag))*2
-; doug's code
-  box=0
-
-  x2 = x2_in - discrete_correlate(x1, x2_in, step=step, nbest=nbest,lag=lag,$
-                                  box=box)
-
-
-
+  x2 = x2_in - discrete_correlate(x1, x2_in, step=step, nbest=nbest,lag=lag)
 
 ; for each x1, get index of nearest x2
   ind = lonarr(n1)
@@ -63,17 +53,13 @@ function discrete_correlate_match, x1, x2_in, step=step, lag=lag
     onexy = transpose([[fltarr(n_elements(x1))+1], [x1]])
      hogg_iter_linfit, onexy, dx, dx*0.+1., coeff
 
-
 ;	coeff=[reform(coeff),0.]
 
 
-  if n1 gt 4 then scale = 1+coeff[1] else scale=1
+  scale = 1+coeff[1]
   x2 = x2*scale
 
-  xoffs = discrete_correlate(x1, x2, step=step, nbest=nbest,lag=lag,$
-                             box=box)
-
-
+  xoffs = discrete_correlate(x1, x2, step=step, nbest=nbest,lag=lag)
   x2 = x2-xoffs
 
   for i=0, n1-1 do ind[i] = where(min(abs(x1[i]-x2)) EQ abs(x1[i]-x2))
@@ -81,12 +67,8 @@ function discrete_correlate_match, x1, x2_in, step=step, lag=lag
   dx = x1-x2[ind]
 
 ; -------- PASS 3: tweak offset 
-  print, 'Tweak offset', median(dx,/even), ' pixels'
-
-; minor fix 12/03
-  x2 = x2+median(dx,/even)
-
-
+  print, 'Tweak offset', median(dx), ' pixels'
+  x2 = x2+median(dx)
   for i=0, n1-1 do ind[i] = where(min(abs(x1[i]-x2)) EQ abs(x1[i]-x2))
 
   return, ind

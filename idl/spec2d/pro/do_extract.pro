@@ -60,16 +60,6 @@
 ;      the domask.pro wrapper which makes the same assumption. Note
 ;      that the PBS shell script cd's to the proper directory. 
 ;
-;      The user can place a file named extractionoverrides.txt in the
-;      directory where quicklook is run.  Format is:
-; 
-;      # slitno objno center fullwidth
-;      59 1637 66 20
-;      (the header line preceded by # is not necessary).  This will
-;      cause, e.g., object #1637 on slit 59 to be extracted over a full
-;      width of 20 pixels centered at row 66 on the slit.  It is
-;      advisable to use only the boxcar extraction in these cases.
-;
 ;      If the user passes do_extract 100 or more slitfiles, then the
 ;      routine will determine the seeing difference between the
 ;      photmetric observations (design fwhm) and the spectroscopy
@@ -265,9 +255,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; in the slitfile that contains the non-local-sky-subtracted data.
   if keyword_set(nonlocal) then goto, jump_nonlocal
 
-; define overct variable.
-  overct = 0
-
 ;--------------------------------
 ; step 1: match the pairs of slit files (red and blue pairs) and
 ; determine objects positions, fwhms, and serendips. tabulate all the
@@ -275,8 +262,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 
 ; define the scale in pixels at which two peaks in the spatial
 ; profile will be considered to be denoting the same object.
-  resolu = 17.
-; changed resolu from 5 to 13 for bad masks RRG
+  resolu = 5.
 ; define the scale over which to smooth the spatial profile when
 ; searching for serendips.
   smthscl = 3.
@@ -342,17 +328,12 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; the bintab file and from it extract the PROJECT name.
                       deimos_isdeep, isdeep, mask
 ; if this is a DEEP2 mask, then get the pcat info.
-                      if strlen(mask) ge 4 then begin
-                          if strupcase(strmid(mask, 0, 4) eq 'KTRS') then $
-                            isktrs = 1 else isktrs = 0
-                      endif else isktrs = 0
-                      if isdeep or isktrs then begin
+                      if isdeep then begin
                           tabdex = where(extnames eq 'PhotCat', cnt)
-                          if cnt eq 0 then begin
-                              print, '(do_extract.pro) PhotCat ' + $
-                                'table not found in bintab file!' 
-                              psee = 0.0
-                          endif else begin
+                          if cnt eq 0 then $
+                            print, '(do_extract.pro) PhotCat ' + $
+                            'table not found in bintab file!' $
+                          else begin
 ; from the pcat table (idl structure), read in the pcat and get the
 ; seeing value from the header....seeing is in CFHT pixels.
                               pcat = mrdfits(bintab, tabdex[0], phdr, /silent)
@@ -383,9 +364,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; sort the BluSlits and DesiSlits tables by dslitid number.
                           blutab = blutab[sort(blutab.dslitid)]
                           desitab = desitab[sort(desitab.dslitid)]
-; check for, and throw out, 'ghost' slits
-                          desitab=desitab[where(desitab.slittyp ne 'G')]
-
                           nslit = n_elements(blutab)
                           slitinfo = {slitn:lonarr(nslit), $
                                       Xmm:fltarr(nslit), $
@@ -448,7 +426,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
                       str[k].ra = ''
                       str[k].dec = ''
                   endelse
-                  if (isdeep or isktrs) and keyword_set(pcat) then begin
+                  if isdeep and keyword_set(pcat) then begin
                       deep_mags = get_mags(objnum[k], pcat=pcat, objpa=objpa)
                       str[k].magb = deep_mags[0]
                       str[k].magr = deep_mags[1]
@@ -458,6 +436,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; now compare the locations of the peaks found in the spatial profile
 ; to the object position given by the design specifications.
                   mindiff = min(abs(desipos[k] - pkcol), minpos)
+                  print,desipos[k]
                   if mindiff le resolu then begin
                       str[k].objpos = pkcol[minpos]
                       str[k].fwhm = width[minpos]
@@ -874,14 +853,8 @@ pro do_extract, files=files, nonlocal=nonlocal, $
     sxaddpar, hdr, 'SeeDiffR', rsd, 'Seeing Diff (arcsec)'
 
 ; write the object information structure into a fits file.
-  objinfolist = findfile('obj_info*', count=objcount)			;ADDED BL 7/2/09 so that when reducing multiple instances
-  if objcount gt 0 then begin						;of the same mask with different chip subsets, the
-        countstring = strcompress(string(objcount+1), /remove_all)	;obj_info file isn't overwritten, have to concatenate all
-   	objfile = 'obj_info.' + mask + '.' + countstring + '.fits'	;obj_info files at the end for zspec to work
-       	mwrfits, finstr, objfile, hdr, /silent, /create
-  endif else begin
-  	mwrfits, finstr, objfile, hdr, /silent, /create
-  endelse
+  mwrfits, finstr, objfile, hdr, /silent, /create
+
 
 ; if we are extracting from the non-local-sky-subtracted extension,
 ; then read back in the obj_info data.
@@ -912,12 +885,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
 ; it just needs to be define for the first pass thru the for/do loop.
   objdone = [-1]
 ; determine the number of objects which we need to extract.
-
-; ADDED 8/17/04
-
-  override=findfile('extractionoverrides.txt') eq 'extractionoverrides.txt'
-  if override then readcol,'extractionoverrides.txt',overslit,overobj,overrow,overwidth,comment='#'
-
   nfiles = n_elements(finstr)
   for j=0,nfiles-1 do begin
 ; get all entries matching the jth object number and slit
@@ -939,7 +906,7 @@ pro do_extract, files=files, nonlocal=nonlocal, $
             print, '(do_extract.pro) ERROR: multiple objects ' + $
             '(w/ same objno) found in blue portion of slit ' + $
             strcompress(string(finstr[j].slitno), /rem)
-          if bcnt gt 0 then bdex = objdex[bdex[0]]
+          if bcnt GT 0 then bdex = objdex[bdex[0]]
           rdex = where(finstr[objdex].color eq 'R', rcnt)
           if rcnt gt 1 then $
             print, '(do_extract.pro) ERROR: multiple objects ' + $
@@ -1025,26 +992,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
       if n_elements(nsigma_boxcar) gt 0 then $
         nsig_box = nsigma_boxcar[0] else nsig_box = 1.1 ;/ 2.35482
 
-
-; August 17, 2004: do the override
-     if bcnt eq 0 then ovdex = rdex else ovdex = bdex
-     if override and strpos(finstr[ovdex].objno,'s') ne 0 then begin
-
-         overidx = where(float(finstr[ovdex].objno) eq overobj and $
-                     (finstr[ovdex].slitno) eq overslit,overct)
-
-         if overct gt 0 then begin
-             print,'Extraction position overridden!'
-             posb=total(overrow[overidx[0]])
-             posr=posb
-             fwhmb=total(overwidth[overidx[0]]/nsig_opt)
-             fwhmr=fwhmb
-             avgfwhmb=total(overwidth[overidx[0]]/nsig_box)
-             avgfwhmr=avgfwhmb
-
-         endif
-
-      endif
 ; extract the blue spectrum via the optimal extraction and via the
 ; tophat (or boxcar) extraction algorithm.
       if bcnt gt 0 then begin
@@ -1130,8 +1077,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
           sxaddpar, hdrB, 'OBJPA', finstr[bdex].objpa, $
             'Object PA on sky', before='SLITPA'
 
-             sxaddpar,hdrB,'FORCED',overct<1,'Extraction position overridden?',before='HISTORY'
-
           if bcnt gt 0 and size(blu_box, /tname) eq 'STRUCT' then begin
               print, '(do_extract.pro) Writing spec1d file: ' + $
                 specfile + ' ......'
@@ -1185,10 +1130,6 @@ pro do_extract, files=files, nonlocal=nonlocal, $
             'I magnitude', after='magR'
           sxaddpar, hdrR, 'OBJPA', finstr[rdex].objpa, $
             'Object PA on sky', before='SLITPA'
-
-          
-             sxaddpar,hdrr,'FORCED',overct<1,'Extraction position overridden?',before='HISTORY'
-
           if size(red_box, /tname) eq 'STRUCT' then begin
               if bcnt gt 0 then $
                 mwrfits, red_box, specfile, hdrR, /silent $

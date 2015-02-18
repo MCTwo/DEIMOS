@@ -56,7 +56,7 @@ function discrete_correlate, x1, x2, step=step, lagrange=lagrange, $
      xlag = findgen((lagrange[1]-lagrange[0])/step+1)*step+lagrange[0]
      min1 = min(x1, max=max1)
      wkeep = where((x2 GT min1+lagrange[0]) AND (x2 LT max1+lagrange[1]), ct)
-     if ct LT 2 then begin 
+     if ct LT 5 then begin 
         print, 'Working between ', min1+lagrange[0], ' and', max1+lagrange[1]
         print, 'Not enough lines to run!!!'
         sdev=1.E10
@@ -84,25 +84,9 @@ function discrete_correlate, x1, x2, step=step, lagrange=lagrange, $
      sind = sort(join)
      nj = n_elements(sind) 
      w1 = where(sind LT n1)
-
+     offs = (join[sind[(w1+1)<(nj-1)]]-x1lag) < $
+       (x1lag-join[sind[(w1-1)>0]])
      
-; the following code is incorrect if the first element or last element
-; in the joined array is an element of x1
-
-     if n1 gt 10 then begin
-         offs = (join[sind[(w1+1)<(nj-1)]]-x1lag) < $
-           (x1lag-join[sind[(w1-1)>0]])
-     endif else begin
-; so added this brute-force version - still not quite right, as
-;   assumes don't match 2 x1's to the same x2, but that appears to be
-;   true for Doug's code too
-         offs=fltarr(n1)
-         for xelement=0,n1-1 do $
-             offs[xelement]=min(abs(x1lag[xelement]-x2trim))
-     endelse
-
-
-
      if keyword_set(box) then begin  
         offs = (offs < box) > (-box) ; limits on penalty for bad match
      endif 
@@ -136,5 +120,4 @@ function discrete_correlate, x1, x2, step=step, lagrange=lagrange, $
   endif 
 
   return, xlag[best]
-
 end

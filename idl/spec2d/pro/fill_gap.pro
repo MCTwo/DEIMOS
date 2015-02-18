@@ -11,7 +11,7 @@
 ; SYNTAX
 ;      fill_gap, file1d, [nbuf=nbuf, npoly=npoly, nbins=nbins, $
 ;                binsz=binsz, /horne, /boxsprof, /optimal, /boxcar, $
-;                /doplot, /debug, /nlsky, header=header,/tweak]
+;                /doplot, /debug, /nlsky, header=header]
 ;
 ; INPUTS
 ;      file1d = a parameter giving a spec1d file name. 
@@ -75,7 +75,6 @@
 ;      telluric = if this keyword is set, then the a-band atmospheric
 ;                 absorption band is corrected using the routine
 ;                 remove_telluric.pro.
-;      tweak - apply skytweak to this file's wavelengths
 ;      header = returns the FITS header of the spec1d file
 ;               corresponding to the extraction tpye requested. in
 ;               case of an error, the header is returned as a int(0).
@@ -96,8 +95,7 @@
 ;      mcc_polyfit
 ;      getcolor
 ;      fits_open/fits_close
-;      remove_telluric 
-;      fix_response
+;
 ; EXAMPLES
 ;
 ;
@@ -165,8 +163,7 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
                    boxsprof=boxsprof, horne=horne, $
                    nlsky=nlsky, spectra=spectra, flats=flats, $
                    doplot=doplot, debug=debug, gapsize=gapsize, $
-                   silent=silent, telluric=telluric, header=header, $
-                   tweak=tweak
+                   silent=silent, telluric=telluric, header=header
 
 ; check that the file1d parameter (spec1d file name) was passed.
   if n_params() lt 1 then $
@@ -187,18 +184,6 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
   if n_elements(boxsprof) then boxsprof = boxsprof[0] ge 1 else boxsprof = 0
   if n_elements(horne) then horne = horne[0] ge 1 else horne = 0
   if (optimal or boxsprof or boxcar) eq 0 then horne = 1
-  if n_elements(tweak) eq 0 then tweak=0
-
-
-; determine data directory
-  tmp=str_sep(file1d,'/') 
-  nparts=n_elements(tmp)
-  path=''
-
-  for i=0,nparts-2 do path=path+tmp[i]+'/'
-
-  if strlen(path) eq 0 then cd,'.',current=path
-
 
 ; open the spec1d FITS file.
   fits_open, file1d, fcb
@@ -265,9 +250,6 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
 ; file. also, kill off any NaN's before they are a problem!
   ss1 = mrdfits(file1d, dex[0], hdrB, /silent)
   header = hdrB
-
-  if tweak then ss1.lambda=applytweaks(ss1.lambda,hdrB,path)
-
   notfinite = where(finite(ss1.spec)*finite(ss1.ivar) eq 0, nct)
   if (nct gt 0) then begin
       ss1.spec[notfinite] = 0.
@@ -275,8 +257,6 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
   endif
   if extnum gt 1 then begin
      ss2 = mrdfits(file1d, dex[1], hdrR, /silent)
-
-       if tweak then ss2.lambda=applytweaks(ss2.lambda,hdrR,path)
      notfinite = where(finite(ss2.spec)*finite(ss2.ivar) eq 0, nct)
      if (nct gt 0) then begin 
         ss2.spec[notfinite] = 0.
@@ -342,12 +322,8 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
 ; remove the a-band atmospheric absorption.
   if telluric then begin
       airmass = sxpar(hdrB, 'AIRMASS')
-      remove_telluric, ss1, airmass,silent=silent
-      fix_response,ss1
-      if extnum gt 1 then begin 
-          remove_telluric, ss2, airmass,silent=silent
-	  fix_response,ss2
-      endif
+      remove_telluric, ss1, airmass
+      if extnum gt 1 then remove_telluric, ss2, airmass
   endif
 
 ; make sure that both sides of the spectrum are good. one might be
@@ -363,23 +339,6 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
           extnum = 1
           ss1 = ss2
       endif
-  endif
-
-; check that the wavelength values are positive!
-  ltz1 = where(ss1.lambda lt 0.0, ltz1cnt)
-  if extnum gt 1 then ltz2 = where(ss2.lambda lt 0.0, ltz2cnt) $
-  else ltz2cnt = 1
-  if ltz1cnt gt 0 and ltz2cnt gt 0 then begin
-      if not(silent) then print, 'Negative wavelength values!'
-      return, 0 
-  endif
-  if ltz1cnt gt 0 and ltz2cnt eq 0 then begin
-      if not(silent) then print, 'Negative wavelength values!'
-      ss1 = ss2
-  endif
-  if ltz1cnt eq 0 and ltz2cnt gt 0 then begin
-      if extnum gt 1 then print, 'Negative wavelength values!'
-      extnum = 1
   endif
 
 ; if there are two spectra in spec1d file, then stitch them 
@@ -471,13 +430,12 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
           lambda1 = ss1.lambda[nlam-1] + dlam
           lambda2 = ss2.lambda[0] - dlam
           gap_lam = makearr(gapsize, lambda1, lambda2)
-          gap_ivar = fltarr(gapsize); + 1E-20
-          
-	  blu_lev = median(ss1.spec[nlam-1:nlam-50])	;changed BL 6/2/2008, was derived from a single array value at the end of the blue chip spectrum
-          red_lev = median(ss2.spec[0:nlam+50])
+          gap_ivar = fltarr(gapsize) + 1E-20
+          blu_lev = ss1.spec[nlam-1]
+          red_lev = ss2.spec[0]
           gap_spec = findgen(gapsize)/(gapsize-1) * $
             (red_lev-blu_lev) + blu_lev
-	  spec = [ss1.spec, gap_spec, ss2.spec]
+          spec = [ss1.spec, gap_spec, ss2.spec]
           lambda = [ss1.lambda, gap_lam, ss2.lambda]
           ivar = [ss1.ivar / chip_ratio^2, gap_ivar, ss2.ivar]
 ;          ss1d = {spec:spec, lambda:lambda, ivar:ivar, $
@@ -489,7 +447,7 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-;%%%%%%%%%%% /SPECTRA %%%%%%%%%
+;%%%%%%%%%%% /SPECTRA %%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       if keyword_set(spectra) then begin
@@ -553,14 +511,10 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
 ;---------------------------
           slitn = STRING(SXPAR(hdrB, 'SLITNO'), forMAT='(I3.3)')
           mask = SXPAR(hdrB, 'SLMSKNAM')
-          ;if STRLEN(mask) gt 4 then mask = STRMID(mask, 0, 4)	;edited out for 1604 data
-          mask = strcompress(mask, /remove_all) 	;added for 1604 data
-	  blufile = 'calibSlit.' + mask + '.' + slitn + 'B*'
+          if STRLEN(mask) gt 4 then mask = STRMID(mask, 0, 4)
+          blufile = 'calibSlit.' + mask + '.' + slitn + 'B*'
           redfile = 'calibSlit.' + mask + '.' + slitn + 'R*'
-	  ;CHANGE THIS IF NOT USING ORELSE DATA!!
-          blufile = '/Volumes/Data2/orelse/lemaux/deimos/ORELSEmasks/' + mask + '/*/' + blufile 
-	  redfile = '/Volumes/Data2/orelse/lemaux/deimos/ORELSEmasks/' + mask + '/*/' + redfile 
-	  blu = MRDFITS(blufile, 1, /SILENT)
+          blu = MRDFITS(blufile, 1, /SILENT)
           red = MRDFITS(redfile, 1, /SILENT) 
           nrows = n_elements(blu.rawflat[0,*])
           nlam = n_elements(blu.rawflat[*,0])
@@ -683,42 +637,13 @@ function fill_gap, file1d, nbuf=nbuf, npoly=npoly, nbins=nbins, $
             print, '(fill_gap.pro) ERROR: gap too large to fill!'
           return, 0.
       endif
-      if keyword_set(nbins) then nbins = nbins[0] $
-          else nbins = 5
-          if keyword_set(binsz) then binsz = binsz[0] $
-          else binsz = 100
-      if keyword_set(npoly) then npoly = npoly[0] $
-          else npoly = 1     
       lambda1 = ss1.lambda[nlam-1] + dlam
       lambda2 = ss2.lambda[0] - dlam
       gap_lam = makearr(gapsize, lambda1, lambda2)
       gap_ivar = fltarr(gapsize) + 1.0E-30
-      
-      blu_lev_array = fltarr(nbins)  ;changed BL 6/2/2008 for same reason as change in blu_lev/red_lev above (see /flats section), but this is much more elaborate
-      blu_lam_array  = fltarr(nbins)
-      red_lev_array = fltarr(nbins)       
-      red_lam_array = fltarr(nbins)
-      	  for i=0, nbins-1 do begin
-          blu_lev_array[i] = median(ss1.spec[nlam-(nbins-i)*binsz-1:nlam-(nbins-1-i)*binsz-1])
-	  blu_lam_array[i] = mean(ss1.lambda[nlam-(nbins-i)*binsz-1:nlam-(nbins-1-i)*binsz-1])
-          red_lev_array[i] = median(ss2.spec[i*binsz:(i+1)*binsz])
-          red_lam_array[i] = mean(ss2.lambda[i*binsz:(i+1)*binsz])
-	  endfor 
-      
-      
-      lev_array = [blu_lev_array, red_lev_array]
-      lam_array = [blu_lam_array, red_lam_array]
-      lev_poly = polyfit(lam_array, lev_array, npoly)
-      ;blu_lev = median(ss1.spec[nlam-51:nlam-1]) ;edited out BL 6/2/2008 for same reason as above (see /flats section)
-      ;red_lev = median(ss2.spec[0:50])
-      flam = 0.   
-      
-         for i=0, npoly do begin
-         flam = flam + lev_poly[i]*gap_lam^(i)
-      	 endfor
-      
-      gap_spec = fltarr(gapsize) + flam ;findgen(gapsize)/(gapsize-1)*(red_lev-blu_lev) + blu_lev
-      ;gap_ivar = 1/gap_spec^2				;changed 4/7/09 BL, making the inverse variance associated with gap counts Poissonian, is bullshit, but if I'm going to use the interpolation over the gap for measurements, this is a reasonable estimate of the error. Previous method was to set all ivar counts to 1e-30 (variance = 1e30)
+      blu_lev = ss1.spec[nlam-1]
+      red_lev = ss2.spec[0]
+      gap_spec = findgen(gapsize)/(gapsize-1)*(red_lev-blu_lev) + blu_lev
       spec = [ss1.spec, gap_spec, ss2.spec]
       lambda = [ss1.lambda, gap_lam, ss2.lambda]
       ivar = [ss1.ivar, gap_ivar, ss2.ivar]

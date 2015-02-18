@@ -149,10 +149,6 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
       set_nulls, fwhm=fwhm, objnum=objnum, objtype=objtype
       return, 0.
   endelse
-
-; check for, and throw out, 'ghost' slits
-  design=design[where(design.slittyp ne 'G')]
-
 ; read in the slit object map (SlitObjMap) table.
   slitdex = where(extnames eq 'SlitObjMap', slitcnt)
   if slitcnt gt 0 then slitobjmap = mrdfits(bfile, slitdex[0], /silent)
@@ -220,7 +216,7 @@ function find_objpos, slitn, nrows, fwhm=fwhm, bfile=bfile,$
   edgeloss = (desilen - nrows) / 2.
 ; finally, calculate the object position.
   objpos = slitobjmap[mapdex].botdist / pixscl - edgeloss
-  print, objpos, slitobjmap[mapdex].botdist, pixscl, edgeloss, desilen, nrows
+
 ; ---------------------------------
 ; now find the correct entry in the ObjectCat for this slit. Note that
 ; slitobjmap.objectid and objectcat.objectid are arrays of longs such

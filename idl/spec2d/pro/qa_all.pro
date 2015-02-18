@@ -12,18 +12,17 @@ pro make_ascii_file, ss, file=file
     strcompress(median(ss.sn_spec1d), /rem)
 ; print the header for the file.
   printf, unit, 'Mask     Date-Obs   Airmass   astar_seeing  ' + $
-    'sn_sprofB   sn_spec1d  zcompleteness  zcompleteness(RED)'
+    'sn_sprofB   sn_spec1d  zcompleteness'
   printf, unit, '--------------------------------------------------' + $
     '----------------------------------------------'
 
 ; loop thru the masks and print the data to the file.
   sp = ' '
   frmt = '(A5, A3, A10, A3, F5.3, A3, F5.3, A3, ' + $
-    'F5.3, A3, F5.3, A3, F6.2, A3, F6.2)'
+    'F5.3, A3, F5.3, A3, F6.2)'
   for ii=0,nmasks-1 do printf, unit, ss[ii].maskname, sp, ss[ii].date, $
     sp, ss[ii].airmass, sp, ss[ii].astar_seeing, sp, ss[ii].sn_sprofB, $
-    sp, ss[ii].sn_spec1d, sp, ss[ii].zcom*100.0, sp, ss[ii].zcomr*100.0, $
-    format=frmt
+    sp, ss[ii].sn_spec1d, sp, ss[ii].zcom*100.0, format=frmt
 ; close the output file.
   close, unit
 end
@@ -38,33 +37,21 @@ pro qa_all
   cd, concat_dir(d2dir,'qa')
 ; collect the output files from the qa_check routine.
   files = findfile('qa.*.fits*', count=nfiles)
-; fix to exclue KTRS masks.
-  mstr = strmid(files,4,4)
-  for ii=0,nfiles-1 do begin
-      if strnumber(mstr[ii]) eq 1 then begin
-          if n_elements(nfsq) eq 0 then nfsq = ii else nfsq = [nfsq, ii]
-      endif
-  endfor
-  nfiles = n_elements(nfsq)
   if nfiles eq 0 then $
     message, '(qa_all.pro) ERROR: no quality output found!'
-  files = files[nfsq]
-  
+
+
 ; read in the latest zcat.
-;  zfile = findfile('$DEEP2PRODUCTS/zcat*.fits*', count=zcnt)
-;  if zcnt eq 0 then message, 'No zcat found!!!'
-;  zfile = reverse(zfile[sort(zfile)])
-  zfile = findfile('$DEEP2PRODUCTS/zcat.latest.fits', count=zcnt)
+  zfile = findfile('$DEEP2PRODUCTS/zcat*.fits*', count=zcnt)
   if zcnt eq 0 then message, 'No zcat found!!!'
+  zfile = reverse(zfile[sort(zfile)])
   zz = mrdfits(zfile[0], 1, /silent)
-  zcat = zz
 
 ; loop through the qa output files and tabulate the results.
   tmp = {maskname:'', date:'', airmass:0.0, $
          astar_seeing:0.0, pcat_seeing:0.0, $
-         sn_sprofB:0.0, sn_spec1d:0.0, zcom:0.0, zcomr:0.0}
+         sn_sprofB:0.0, sn_spec1d:0.0, zcom:0.0}
   all = replicate(tmp, nfiles)
-  redlim = 0.5
   for i=0,nfiles-1 do begin
       ss = mrdfits(files[i], 1, hdr, /silent)
       all[i].maskname = sxpar(hdr, 'maskname')
@@ -74,51 +61,15 @@ pro qa_all
       all[i].pcat_seeing = sxpar(hdr, 'psee')
       all[i].sn_sprofB = sxpar(hdr, 'sn_val1')
       all[i].sn_spec1d = sxpar(hdr, 'sn_val2')
-;      all[i].zcom = sxpar(hdr, 'zge3')
-
-      nredgood = total(zcat.magr-zcat.magi gt redlim $
-                       AND zcat.pgal gt 0.2 $
-                       AND strcompress(zcat.maskname, /rem) eq $
-                       strcompress(all[i].maskname, /rem) $
-                       AND zcat.zquality ge 3 AND zcat.zquality le 4 $
-                       AND zcat.z gt 0.005)
-
-      nred = total(zcat.magr-zcat.magi gt redlim $
-                   AND zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem))
-      
-      nredbad = total(zcat.magr-zcat.magi gt redlim $
-                         AND zcat.pgal gt 0.2 $
-                         AND strcompress(zcat.maskname, /rem) eq $
-                         strcompress(all[i].maskname, /rem) $
-                         AND zcat.zquality ge 1 AND zcat.zquality le 2)
-            
-      ngood = total(zcat.pgal gt 0.2 $
-                       AND strcompress(zcat.maskname, /rem) eq $
-                       strcompress(all[i].maskname, /rem) $
-                       AND zcat.zquality ge 3 AND zcat.zquality le 4 $
-                       AND zcat.z gt 0.005)
-    
-    
-      nbad = total(zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem) $
-                   AND zcat.zquality ge 1 AND zcat.zquality le 2)
-    
-
-      nobj = total(zcat.pgal gt 0.2 $
-                   AND strcompress(zcat.maskname, /rem) eq $
-                   strcompress(all[i].maskname, /rem))
-
-
-      redsuccess = (nredgood/(nredbad+nredgood))
-      success =  ngood/(nbad+ngood)
-
-      all[i].zcom = success
-      all[i].zcomr = redsuccess
-
-
+      all[i].zcom = sxpar(hdr, 'zge3')
+      if all[i].zcom eq 0.0 then begin
+          totwh = where(strcompress(zz.maskname, /rem) eq $
+                        strcompress(all[i].maskname, /rem), totnum)
+          if totnum gt 0 then begin
+              q3wh = where(zz[totwh].zquality ge 3, q3num)
+              all[i].zcom = float(q3num) / float(totnum)
+          endif 
+      endif
       if keyword_set(tab) then tab = [tab, ss] $
       else tab = ss
   endfor

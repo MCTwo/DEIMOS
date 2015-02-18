@@ -10,9 +10,9 @@
 ;      1-dimensional spectrum for the given slit. The structure
 ;      contains the flux, wavelength, and inverse variance along the
 ;      slit. The 1-d spectrum is extracted according to a
-;      user-specified algorithm (either an unweighted boxcar 
-;      extraction or an optimal extraction
-;      algorithm) with presently the optimal extraction set
+;      user-specified algorithm (either a boxcar inverse
+;      variance weighted extraction or an optimal extraction
+;      algorithm) with presently the inverse variance extraction set
 ;      as the default extraction setting. 
 ;
 ;
@@ -49,7 +49,7 @@
 ;                extracted using the optimal extraction
 ;                algorithm. Note that in this approach we assume that
 ;                the spatial profile is described by a Guassian. And
-;                also note that this is a modified version of the
+;                also not that this is a modified version of the
 ;                optimal extraction described by K. Horne (see /horne
 ;                keyword). 
 ;                Recall that if the /optimal keyword is not set, then
@@ -61,20 +61,18 @@
 ;                spatial range the weight is given by the inverse
 ;                variance.
 ;      horne = if this keyword is set, then the spectrum is extracted
-;              using a less modified version of the optimal extraction
-;              algorithm as detailed by
+;              using the optimal extraction algorithm as detailed by
 ;              K. Horne (1986, PASP, 98, 609).
 ;      boxsprof = if this keyword is set, then the spectrum is
-;                 extracted using an un-weighted boxcar
+;                 extracted using an inverse variance weighted tophat
 ;                 extraction algorithm. This algorithm differs from
 ;                 the /boxcar extraction in how it handles
-;                 bad-pixels. Here bad-pixels are masked and the
-;                 fraction of flux
+;                 bad-pixels. Here bad-pixels are masked and the flux
 ;                 missed within these pixels is determined using the
 ;                 object's spatial profile. The final spectrum is
 ;                 scaled so as to account for this missed flux.
-;      boxcar = this is the default setting. If this keyword is set
-;               then an unweighted tophat extraction is
+;      boxcar = this is the default setting. If this keyword, is set
+;               then an inverse-variance weighted tophat extraction is
 ;               employed. For the /boxcar extraction, all bad-pixels
 ;               will be linearly interplated over and then the
 ;               extraction is performed.
@@ -95,8 +93,8 @@
 ;                           spec.ivar. 
 ;             spec.ivarfudge = an empirical factor by which to
 ;             multiply spec.ivar to make it match observed
-;             fluctuations (in a median sense).  It is saved for
-;             diagnostic purposes. 
+;             fluctuations (in a median sense).  multiplying by
+;             (spec.ivarfudge < 1) may be advisable in many situations.
 ;
 ; PROCEDURES CALLED 
 ;      lambda_eval

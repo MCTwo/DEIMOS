@@ -144,22 +144,11 @@ pro deimos_spslit, chipno, maskno, calibfile, $
             
 ; check date; crosstalk existed before Aug. ~20th.
      mjd = sxpar(sci_header, 'MJD-OBS')
-; if date doesn't appear (DCS?), assume we're OK. 
-
+; if date doesn't appear (DCS?), assume we're OK.
      needsfixing = (mjd lt 52505.) AND mjd gt 1.
             
      specimage = deimos_read_chip(sciencenames[exposure], chipno, $
                                   fixup = needsfixing, quick=quick) 
-
-     if stdev(specimage[0:99999]) eq 0 then begin
-         message, $
-           'WARNING:  There is no signal in this image!', /info
-         print, $
-           'WARNING:  There is no signal in this image!'
-         return
-     endif
-
-
 ; get exp. time in seconds
      exposure_time = float(sxpar(sci_header, 'EXPTIME'))
                                 
@@ -251,7 +240,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 ; -------- Begin loop over slitlets
      vprint, 4, 'beginning loop over ', byte(nslitlets), ' slitlets'
      for islit=0, nslitlets-1 do begin ;loop over all slitlets
-         
+
        
         calib = mrdfits(calibfile[islit], 1, header, /silent)
         if quick le 0 then $
@@ -275,10 +264,6 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 	endelse
 
         slitn = sxpar(header, 'SLITNO')
-        objid = sxpar(header,'OBJID')
-        if isdeepdata then issn=   (long(objid)/long(1D7) eq 6) $
-		else issn = 0
-
         slitwid = sxpar(header, 'SLITWID')
 ; get the maskpa and slitpa from the calibSlit header.
         slitpa = sxpar(header, 'SLITPA')
@@ -498,7 +483,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 ;       tweak wavelengths of spslit
 
         if quick le 0 then begin
-           deimos_skytweak, spslit, skytweak=skytweak
+           deimos_skytweak, spslit, skytweak=skytweak,plot=1
            wave = lambda_eval(spslit,/double)
 
 ; do we want to do this for non-DEEP2 data?
@@ -518,7 +503,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
 
 
 ; if quick >1, want to be really quick
-        if quick lt 2 OR issn then begin
+        if quick lt 2 then begin
 
 ; deweight vignetted pixels - 100x, say?
            flagivar=flagivar/(1.+99.*vig_mask)
@@ -537,43 +522,10 @@ pro deimos_spslit, chipno, maskno, calibfile, $
               profile=profile/median(profile)
               correction=(fltarr(ncol)+1.) # profile
               rect_spec=rect_spec/correction
-              spslit.flux=rect_spec
+              spslit.flux=floatcompress(rect_spec+0., ndig=12)
               flagivar=flagivar*correction^2
               spslit.ivar=spslit.ivar*correction^2
            endif
-
-
-; if we have lots of sky, try to subtract off gradients
-           if n_elements(skyind) gt 100 then begin
-               vprint,2,'attempting to correct gradients in sky'
-               skyprof=find_object(spslit,profivar=profivar,/NOSUB)
-               xdata=findgen(n_elements(skyprof))
-               aa= dblarr(2,n_elements(xdata))
-               aa[0,*]=1.D0 
-               aa[1,*]=xdata
-
-               skyct=0
-               skyok=xdata*0
-               skyok[skyind]=1
-               skyok=erode(skyok,fltarr(15)+1)
-               if total(skyok) gt 60 then skyind=where(skyok,skyct)
-               hogg_iter_linfit,aa[*,skyind],skyprof[skyind],profivar[skyind],fit
-               synth=fit[0]+fit[1]*xdata
-               if abs(fit[1]*n_elements(xdata)) gt 0.3 and  $
-                        abs(fit[1]*n_elements(xdata)) lt 20 $
-                         AND min(synth) gt 0 AND skyct gt 60 $
-                 then begin
-                   vprint,2,'modifying gradients'
-                   
-                   synth=synth-mean(synth)
-                   synth2=(fltarr(ncol)+1) # synth
-                   spslit.flux=spslit.flux-synth2
-                   rect_spec=spslit.flux
-                   vprint,2,'parameters: '+string(fit)
-               endif
-            
-           endif
-
 
 
            skywave = wave[*, skyind]
@@ -743,7 +695,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
       
         color = (chipno gt 4) ? 'R':'B' ;red or blue side??
 
-        if quick le 0 OR issn then $
+        if quick le 0 then $
           fname = outdatadir+'spSlit.'+maskstr+'.'+slitstr+color+'.fits' $
         else $
           fname = outdatadir+'quickSlit.'+maskstr+'.'+slitstr+color+'.fits'
@@ -754,7 +706,7 @@ pro deimos_spslit, chipno, maskno, calibfile, $
           else create = file_test(fname) eq 0
         mwrfits, spSlit, fname, hdr, create=create
         sxaddpar, hdr2, 'EXTNAME', 'sset', 'B-spline structure'
-        if quick lt 2 OR issn then $
+        if quick lt 2 then $
            mwrfits, sset, fname, hdr2 ;save bspline structure in separate HDU
       
         timestr = string('Chp', chipno, ' Exp', exposure+1, ' of', $

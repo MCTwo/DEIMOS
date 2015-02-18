@@ -74,7 +74,6 @@ function deimos_arcfit, slitarc, arcsat, arcline_x, lamps_in, wset, $
   anascale=1.6/anamorph
 
   maxerr=maxerr < slitwid/8.
-  if nrow gt 120 then maxerr=maxerr*4.
 
   errscale=maxerr/0.15
 
@@ -99,6 +98,8 @@ function deimos_arcfit, slitarc, arcsat, arcline_x, lamps_in, wset, $
         print, ' no good or fair lines found!'
         return, 0
   endelse       
+
+;  print, 'new arcfit'
 
 ; -------- only use nonvignetted / nonsaturated regions for onchip lines
   partvignette = total(nearvig, 2) GT 1. ;partially-vignetted regions
@@ -351,7 +352,6 @@ spline = 0  ; DPF - June 5 (DISABLED CODE REMOVED BY JAN 8/02)
       
       if nlamp gt 1 then dev = lamps.lambda-pxx $
 	else dev = lamps.lambda-polyx
-
       bad = where(abs(dev) gt maxerr/(1.+3.*fairlines), nbad) ;flag bad lines
       if nbad gt 0 then begin
         worst = max(abs(dev), ind)

@@ -31,7 +31,7 @@
 ;   Written by BFG, jul02
 ;-
  
-pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=sigmult
+pro flag_cr,  slit, newivar, crmask, medflux=medflux
   
   flux = slit.flux
   newivar =  slit.ivar
@@ -40,8 +40,6 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
   xidx=lindgen(ncols,nrows)
   yidx=xidx / ncols
   xidx = xidx MOD ncols
-  if n_elements(medwidth) eq 0 then medwidth=2.
-  if n_elements(sigmult) eq 0 then sigmult=1.
 
   notatedge=yidx ne 0 AND yidx ne (nrows-1) AND $
     xidx ne 0 AND xidx ne (ncols-1)
@@ -50,7 +48,7 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
 ;;; DO A SIMPLE COSMIC RAY REJECTION by setting ivar=0 at cosmic rays.
 ;;; FIRST SMOOTH THE FLUX USING A MEDIAN FILTER.
   if n_elements(medflux) eq 0 then $
-    medflux = djs_MEDIAN(flux, width=2*medwidth+1, boundary='reflect')
+    medflux = djs_MEDIAN(flux, width=5, boundary='reflect')
   for i=0,4 do medflux[i,*]=median(flux[i,*])<medflux[i,*]
   for i=ncols-5,ncols-1 do medflux[i,*]=median(flux[i,*])<medflux[i,*]
 
@@ -65,7 +63,7 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
 
 
 ;---flag outliers above 20 sigma from the local median
-  whcr = WHERE( (flux-medflux GT sigmult*20./SQRT(ivar)) AND notatedge, whct)
+  whcr = WHERE( (flux-medflux GT 20./SQRT(ivar)) AND notatedge, whct)
   if whct gt 0 then begin
     ;print,  'flagged '+string(whct)+ ' CR pixels.'
     newivar[whcr] = 0.
@@ -73,7 +71,7 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
   endif
 
   testcr=dilate(crmask,bytarr(7,7)+1)
-  whcr = WHERE( (flux-medflux GT sigmult*10./SQRT(ivar)) $
+  whcr = WHERE( (flux-medflux GT 10./SQRT(ivar)) $
                 AND testcr AND notatedge, whct)
 
   if whct gt 0 then begin
@@ -83,7 +81,7 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
   endif
 
   testcr=dilate(crmask,bytarr(3,3)+1)
-  whcr = WHERE( (flux-medflux GT sigmult*5./SQRT(ivar)) AND testcr, whct)
+  whcr = WHERE( (flux-medflux GT 5./SQRT(ivar)) AND testcr, whct)
 
   if whct gt 0 then begin
     ;print,  'flagged '+string(whct)+ ' CR pixels.'
@@ -91,7 +89,7 @@ pro flag_cr,  slit, newivar, crmask, medflux=medflux,medwidth=medwidth,sigmult=s
     crmask[whcr] = 1b
   endif
   testcr=dilate(crmask,bytarr(3,3)+1)
-  whcr = WHERE( (flux-medflux GT sigmult*5./SQRT(ivar)) AND testcr, whct)
+  whcr = WHERE( (flux-medflux GT 5./SQRT(ivar)) AND testcr, whct)
 
   if whct gt 0 then begin
     ;print,  'flagged '+string(whct)+ ' CR pixels.'

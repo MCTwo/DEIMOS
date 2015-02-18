@@ -1,14 +1,13 @@
 ;+
 ; NAME:
-;   deimos_mask_calibrate_2013a
+;   deimos_mask_calibrate
 ;
 ; PURPOSE:
 ;   top level routine to generate flats and arcs to a given mask,
-;   with separate FITS files for each slitlet. For slider 4 data taken
-;   during the 2013a semester.
-; 
+;   with separate FITS files for each slitlet.
+;
 ; CALLING SEQUENCE:
-;   deimos_mask_calibrate_2013a, planfile, chiplist=chiplist, $
+;   deimos_mask_calibrate, planfile, chiplist=chiplist, $
 ;                          onlyalign=onlyalign, slitlist=slitlist
 ; 
 ; INPUTS:
@@ -38,7 +37,6 @@
 ;  Doug Finkbeiner, Marc Davis 3Jun2002
 ;  JAN 07jul02 - pix-flat normalization included
 ;  2002-Oct-09 - changed slitno value in header to bluslitno - DPF
-;  2013-Oct-09 - changed initial wavelength guess - WAD
 ;----------------------------------------------------------------------
 FUNCTION get_anamorph, gratenum, lambda_c
 
@@ -98,7 +96,7 @@ end
 
 
 
-pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
+pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
      slitlist=slitlist, onlyalign=onlyalign,quick=quick
 
   if n_elements(quick) eq 0 then quick = 0
@@ -155,8 +153,6 @@ pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
         vprint, 1, $
         string('No MaskDesign table found in file ' + bfile + '!!!') $
       else masktab = mrdfits(bfile, maskdex[0], /silent)
-      simple_tables,bfile,slitnames=slitnames,objnames=objnames
-
   endelse
 
 ; set the read-noise value.
@@ -169,7 +165,7 @@ pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ;  if NOT keyword_set(chiplist) then chiplist = [1, 2, 3, 4, 5, 6, 7, 8]
 
-  if !d.name eq 'X' then device, pseudo=8
+  device, pseudo=8
   verbset, 4
   ybin = 8
   flat = 1
@@ -302,7 +298,7 @@ pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ; process optical model for this chip
      model_lambda =  deimos_omodel(chipno, slitcoords, arc_header)
-     model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 63.		; changed WAD 2013/Oct/09, the change from +25 to -50 factor was suggested by Michael Cooper to fix a poor wavelength solution problem
+     model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 63.    ; changed WAD 2013/Oct/09, the change from +25 to -50 factor was suggested by Michael Cooper to fix a poor wavelength solution problem
      model_lambda.lambda_y_top[0] = model_lambda.lambda_y_top[0] + 63. ; changed WAD 2013/Oct/09, the change from +25 to -50 factor was suggested by Michael Cooper to fix a poor wavelength solution problem
      model_lambda.lambda_y_bottom[0] = model_lambda.lambda_y_bottom[0] + 63. ; changed WAD 2013/Oct/09, the change from +50 to -50 factor was suggested by Michael Cooper to fix a poor wavelength solution problem
      nslits=total(model_lambda.xb gt 0 AND model_lambda.xt gt 0)
@@ -564,7 +560,6 @@ pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ;retrieve true slitn, for use in output name and for possible selection
        bluslitno = slitcoords[indblu[slitno]].slitno
-       print, 'Bluslitno is', bluslitno						;added BL 5/13
 ; get the slitpa and maskpa for this slit/mask.
        get_pa, bluslitno, slitpa=slitpa, maskpa=maskpa, $
          desitab=desitab, masktab=masktab
@@ -794,10 +789,7 @@ pro deimos_mask_calibrate_2013a,  planfile,  chiplist=chiplist, noplot=noplot, $
            'Was X1 synthesized from other traces?'
          sxaddpar, hdr, 'WAVESIG', sigma, $
            'RMS error in lambda solution, in AA (1&10 are flags)'
-
-         whobj=where(slitnames eq bluslitno,objct)
-         if objct gt 0 then objid=objnames[min(whobj)] else objid=0
-         SXADDPAR,hdr,'OBJID',objid,'Object number'
+         
          if polyflag then $
            sxaddpar, hdr,'WAVETYPE','POLYFLAG','wavelength solution method' $
          else sxaddpar,hdr,'WAVETYPE','TRACESET','wavelength solution method'

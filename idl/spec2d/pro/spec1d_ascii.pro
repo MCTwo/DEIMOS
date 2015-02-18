@@ -63,10 +63,10 @@ pro spec1d_ascii, files=files, optimal=optimal, horne=horne, $
   nfiles = n_elements(files)
   for i=0,nfiles-1 do begin
 ; fill the gap between the red and blue sides of spectrum.
-      if optimal then spec1d = fill_gap(files[i], /optimal, /silent)
-      if horne then spec1d = fill_gap(files[i], /horne, /silent)
-      if boxcar then spec1d = fill_gap(files[i], /boxcar, /silent)
-      if boxsprof then spec1d = fill_gap(files[i], /boxsprof, /silent)
+      if optimal then spec1d = fill_gap(files[i], /optimal)
+      if horne then spec1d = fill_gap(files[i], /horne)
+      if boxcar then spec1d = fill_gap(files[i], /boxcar)
+      if boxsprof then spec1d = fill_gap(files[i], /boxsprof)
       if size(spec1d, /tname) eq 'STRUCT' then begin
 ; construct outut file name.
           len = strlen(files[i])
@@ -74,13 +74,12 @@ pro spec1d_ascii, files=files, optimal=optimal, horne=horne, $
 ; open file unit for writing.
           openw, unit, filename, /get_lun
 ; print a comment line at the top of file.
-          printf, unit, '#   lambda        flux        ivar      skyspec'
+          printf, unit, '#   lambda        flux        ivar'
 ; print the flux (spec), lambda, and ivar values to the file.
           npts = n_elements(spec1d.spec)
           for j=0,npts-1 do $
             printf, unit, spec1d.lambda[j], '   ', spec1d.spec[j], '   ', $
-            spec1d.ivar[j], '   ', spec1d.skyspec[j], $
-            format='(F, A, F, A, E12.5, A, F)'
+            spec1d.ivar[j], format='(F10.4, A, F10.4, A, E12.5)'
 ; close and free the file unit.
           close, unit
           free_lun, unit

@@ -1,4 +1,3 @@
-
 ;+
 ; NAME:
 ;   deimos_slit_match
@@ -233,6 +232,7 @@ i2=max(where(xblu ne -1.))
 ; One element of xblupix is assigned via ind (repeats possible) for
 ; EACH found_x. 
 
+
 ; Linear fit to tsets
 ;  coeff = linfit(xpos[npix/2, *], xblupix[ind])
 ; 3-sigma clip
@@ -248,11 +248,7 @@ i2=max(where(xblu ne -1.))
 
 ; do this with multilinear regression with outlier rejection
 
-; reject extreme outliers
-
-  residual=(found_x-xblupix[ind]) - median(found_x-xblupix[ind],/even)
-  weights=( abs(residual) lt 100.)
-  if total(weights) eq 0 then weights=weights*0+1.
+  weights = ind*0.+1.
 
 ;  if djsig(yblu[ind]) gt 5. then begin
 ;     onexy = transpose([[fltarr(n_elements(ind))+1], [xblu[ind]], [yblu[ind]]])
@@ -264,12 +260,13 @@ i2=max(where(xblu ne -1.))
 ;  endelse
   yfit = deimos_slit_coeff_eval(xblu[ind], xblu[ind]*0., coeff)
 
+;  coeff = [const, reform(result, n_elements(result)) ]
+
 ; compute residual
   res = yfit-found_x
   sigres = djsig(res, sigrej = sigrej)
-  if n_elements(res) lt 5 then cut = 5 else cut=sigrej*sigres
+  out = abs(res) GT sigrej*sigres
 
-  out = abs(res) GT cut
 
 
 ; -------- check for duplicate indices
@@ -293,8 +290,6 @@ i2=max(where(xblu ne -1.))
              coeff: tset.coeff[*, good]}
      tset = sset
   endif 
-
-
 
   return
 end
@@ -377,24 +372,12 @@ pro deimos_slit_match, chipno, tset1, tset2, indblu, synth1, synth2, $
   yblu1 = slitcoords.ymm - slitcoords.slitlength*tan(slitcoords.pa/!radeg)/2
   yblu2 = slitcoords.ymm + slitcoords.slitlength*tan(slitcoords.pa/!radeg)/2
 
-
-
   usemodel=0
   nmod=total(model.xt gt 0 OR model.xb gt 0)
   if total(nmod) lt 7 then begin
       usemodel=1
-      wh=where(model.xt NE model.xb)
-      switched=mean(model.xt[wh]-model.xb[wh]) lt 0
-
-
-; reversed top and bottom
-      if switched then begin
-          deimos_slit_match_model,model.xt,tset1, ind1, coeff1, sigres=sigres1
-          deimos_slit_match_model,model.xb,tset2, ind2, coeff2, sigres=sigres2
-      endif else begin
-          deimos_slit_match_model,model.xb,tset1, ind1, coeff1, sigres=sigres1
-          deimos_slit_match_model,model.xt,tset2, ind2, coeff2, sigres=sigres2
-      endelse
+      deimos_slit_match_model,model.xb,tset1, ind1, coeff1, sigres=sigres1
+      deimos_slit_match_model,model.xt,tset2, ind2, coeff2, sigres=sigres2
   endif else begin
       deimos_slit_match_sub, xblu1, yblu1, tset1, ind1, coeff1, sigres=sigres1
       deimos_slit_match_sub, xblu2, yblu2, tset2, ind2, coeff2, sigres=sigres2
@@ -432,9 +415,9 @@ pro deimos_slit_match, chipno, tset1, tset2, indblu, synth1, synth2, $
 ;  blulim2 = deimos_slit_coeff_eval(2047., 0, coeff1) < deimos_slit_coeff_eval(2047., 0, coeff2) 
 
   if usemodel then begin
-      if switched then xblu1=model.xt else xblu1=model.xb
+      xblu1=model.xb
       yblu1=xblu1*0+1.
-      if switched then xblu2=model.xb else xblu2=model.xt
+      xblu2=model.xt
       yblu2=xblu2*0+1.
   endif
 
@@ -451,8 +434,7 @@ pro deimos_slit_match, chipno, tset1, tset2, indblu, synth1, synth2, $
 ;  need = (xblupix1 GT blulim1) AND (xblupix2 LT blulim2)
   buffer = 20.   ;set this to a bigger number if you want bigger slits
 ;  need = (xpred1 GT (0-buffer) ) AND (xpred2 LT (2047+buffer)) ; if central row on chip, we keep
-  need = ( (xpred2 gt buffer and xpred1 lt 2047.-buffer) $
-           and (xblu1 ne -1 or xblu2 ne -1) )
+  need = (xpred2 gt buffer  and xpred1 lt 2047.-buffer)
 
 ; at least one edge must be on chip, and at least buffer pixels must
 ; be on chip.

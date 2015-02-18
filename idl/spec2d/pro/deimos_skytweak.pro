@@ -74,6 +74,7 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
      dir = getenv('DEEP_DIR')+'/'
      if dir eq '/' then message, 'you must set $DEEP_DIR'
      fname = dir+'spec2d/etc/deep_skylines.dat'
+;     fname = dir+'spec2d/etc/yuko_skylines.dat'
 ; should probably make this fail if the file is not there!
      flist = findfile(fname)
      if flist[0] ne fname then fname = dir+'spec2d/etc/sdss_skylines.dat'
@@ -96,15 +97,10 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
    wheregood2=where(vigpix2 eq 0) 
 
    wheregood=[wheregood,wheregood2]	
-   if n_elements(wheregood) lt 10 then begin
-       vigpix2 = total((slit.mask AND 8B) EQ 8B, 2) lt nrow-nbuf
-        wheregood=where(vigpix2 ne 0)  
-   endif
-
    if max(wheregood) ge 1 then begin
 	   goodrange = minmax(wheregood[where(wheregood ge 0)])
    endif else begin
-     vprint,3, 'Sky tweak found no good columns'
+     print, 'Sky tweak found no good columns'
      dlamsky = 0
      skytweak=zerotweak
      return
@@ -120,7 +116,7 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
 
 
   if nw lt 1 or total(goodrow) lt 1 then begin 
-     vprint, 3,'Sky tweak found no good lines! (or only 1)'
+     print, 'Sky tweak found no good lines! (or only 1)'
      dlamsky = 0
      skytweak=zerotweak
      return
@@ -162,7 +158,7 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
 
   
   if nkeep le 1 then begin 
-     vprint, 3,'Sky tweak found no good lines! (or only 1)'
+     print, 'Sky tweak found no good lines! (or only 1)'
      dlamsky = 0
      skytweak=zerotweak
      return
@@ -191,8 +187,8 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
 
 ; if slit is no good, do nothing to it
      if ngood lt 5 then begin
-        vprint,3, 'no information in skytweak!'
-;        message, 'no information in skytweak!', /INFO
+        print, 'no information in skytweak!'
+        message, 'no information in skytweak!', /INFO
         dlamsky =  0
 	skytweak=zerotweak
         return
@@ -252,9 +248,10 @@ pro deimos_skytweak, slit, slitwid=slitwid, dlamsky=dlamsky, skyline=skyline, $
        xtitle='wavelength [Ang]', ytit='row', chars=1.5
      
      for i=0, nw-1 do begin 
-        oplot, lamobs[*, i], ycen[*, i], ps=6, syms=.25
-        oplot, lamobs[*, i]+dlamsky[*, i]*250, ycen[*, i], ps=-1
-        
+         if sigbyline[i] LT 0.06 then begin
+             oplot, lamobs[*, i], ycen[*, i], ps=6, syms=.25
+             oplot, lamobs[*, i]+dlamsky[*, i]*250, ycen[*, i], ps=-1
+        endif
         ;mn = djs_mean(dlamsky[*, i])
         ;sig = djsig(dlamsky[*, i])
         print, 'Line:', i, '  lambda:', skylinew[i].lambda, '  offset:', mnbyline[i], $

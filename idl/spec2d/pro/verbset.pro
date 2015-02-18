@@ -26,7 +26,6 @@
 ;		Written
 ;
 ;----------------------------------------------------------------------
-
 pro verbset, verblevel_in
 
   common verbosity_level, verblevel

@@ -69,11 +69,9 @@
 ;     DEEP2 1HS mask before attempting to locate pcat information.
 ;-
 
-pro make_bintab_file, planfile, quick=quick
+pro make_bintab_file, planfile,quick=quick
 
-; check if the /quick keyword was set.
-  if n_elements(quick) gt 0 then quick = quick[0] ge 1 $
-  else quick = 0 
+  if n_elements(quick) eq 0 then quick = 0
 
 ; if the plan file isn't passed then search for it.
   if n_params() eq 0 then begin
@@ -87,10 +85,11 @@ pro make_bintab_file, planfile, quick=quick
 
 ; select a raw frame from which to read the bin tables.
   file = sciencenames[0]
-  if strlen(file) eq 0 then file = arcnames[0]
+
+ if strlen(file) eq 0 then file = arcnames[0]
 
 ; construct the name of the output .fits bin tab file.
-  bin_name = strcompress(maskname, /rem)
+  bin_name = STRCOMPRESS(maskname, /rem)
   deimos_isdeep, isdeep, bin_name, file=file
   bin_file = bin_name + '.bintabs.fits'
 ; open the science frame .fits file.  
@@ -167,8 +166,7 @@ pro make_bintab_file, planfile, quick=quick
   objdex = where(fcb.extname eq 'ObjectCat', cnt)
   if cnt eq 0 then begin
     fits_close, fcb
-    message, 'ObjectCat bin table not found!' ,/info
-    return
+    message, 'ObjectCat bin table not found!' 
   endif else objdex = objdex[0]
   objcat = mrdfits(file, objdex, /silent)
   
@@ -176,14 +174,7 @@ pro make_bintab_file, planfile, quick=quick
 ; the pcat files in the bintab file and do not include the pcat files
 ; in the bintab file and do not include the 1HS.xxxx.mask.fits file
 ; either.
-
-; check if the mask is a KTRS mask.
-  if strlen(bin_name) ge 4 then begin
-      if strupcase(strmid(bin_name, 0, 4)) eq 'KTRS' then isktrs = 1 $
-      else isktrs = 0
-  endif else isktrs = 0
-
-  if (isdeep and quick eq 0) or isktrs then begin
+  if isdeep AND quick le 0 then begin
 ; read the first object number taking only the first 2 digits in the
 ; string - this denotes the photometry field.
       obj0 = string(objcat[0].object, format='(I8.8)')
@@ -193,8 +184,6 @@ pro make_bintab_file, planfile, quick=quick
 ; check if the mask is from the Keck Telescope Redshift Survey
 ; (KTRS). if so, get pcat 00.
       if strmid(field, 0, 1) eq '0' then field = '00'
-; get the 00-pcat for the KTRS masks.
-      if isktrs then field = '00'
 ; now read the corresponding pcat file.
       pcat = getphot(field, fieldlabel, hdr)
 ; modify the header to give it a proper extension name.
@@ -206,7 +195,7 @@ pro make_bintab_file, planfile, quick=quick
       for i=0,n-1 do begin
           dex = where( pcat.objno eq object_nums[i], cnt )
           if cnt gt 0 then begin
-              if n_elements(pdex) eq 0 then pdex = dex $
+              if i eq 0 then pdex = dex $
               else pdex = [pdex,dex]
           endif
       endfor

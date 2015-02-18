@@ -51,7 +51,6 @@ pro deimos_isdeep, isdeep, maskname, file=file
 ; check if this is a KTRS mask. these masks will have a project name
 ; of DEEP2-1HS, but should be considere isdeep=0 masks.
   if n_params() gt 1 and size(maskname, /tname) eq 'STRING' then begin
-      if strmid(maskname,0,1) eq '6' then isdeep = 0
       if strpos(strupcase(maskname), 'KTRS') ge 0 then isdeep = 0
   endif else begin
 ;      mask = (strsplit(file, '.', /extract))[0]

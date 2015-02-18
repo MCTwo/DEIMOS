@@ -153,8 +153,6 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
         vprint, 1, $
         string('No MaskDesign table found in file ' + bfile + '!!!') $
       else masktab = mrdfits(bfile, maskdex[0], /silent)
-      simple_tables,bfile,slitnames=slitnames,objnames=objnames
-
   endelse
 
 ; set the read-noise value.
@@ -167,7 +165,7 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ;  if NOT keyword_set(chiplist) then chiplist = [1, 2, 3, 4, 5, 6, 7, 8]
 
-  if !d.name eq 'X' then device, pseudo=8
+  device, pseudo=8
   verbset, 4
   ybin = 8
   flat = 1
@@ -300,12 +298,6 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
 
 ; process optical model for this chip
      model_lambda =  deimos_omodel(chipno, slitcoords, arc_header)
-     model_lambda.lambda_y[0] = model_lambda.lambda_y[0] + 25.*(model_lambda.lambda_y[0] ne 0)          ;changed BL 6/24/09, suggested by Jeff Newman, trying these lines to change the optical model guess for the new FCS actuator, the actual central wavelength is about 26 A off of the reported central wavelength
-     goodlammod = model_lambda.lambda_y[0,where(model_lambda.lambda_y[0] gt 0)]
-     meangoodlammod = mean(goodlammod)
-     
-     model_lambda.lambda_y_top[0] = model_lambda.lambda_y_top[0] + 25.*(model_lambda.lambda_y_top[0] ne 0)
-     model_lambda.lambda_y_bottom[0] = model_lambda.lambda_y_bottom[0] + 50.*(model_lambda.lambda_y_bottom[0] ne 0)
 
      nslits=total(model_lambda.xb gt 0 AND model_lambda.xt gt 0)
 
@@ -795,10 +787,7 @@ pro deimos_mask_calibrate,  planfile,  chiplist=chiplist, noplot=noplot, $
            'Was X1 synthesized from other traces?'
          sxaddpar, hdr, 'WAVESIG', sigma, $
            'RMS error in lambda solution, in AA (1&10 are flags)'
-
-         whobj=where(slitnames eq bluslitno,objct)
-         if objct gt 0 then objid=objnames[min(whobj)] else objid=0
-         SXADDPAR,hdr,'OBJID',objid,'Object number'
+         
          if polyflag then $
            sxaddpar, hdr,'WAVETYPE','POLYFLAG','wavelength solution method' $
          else sxaddpar,hdr,'WAVETYPE','TRACESET','wavelength solution method'
