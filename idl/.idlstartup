@@ -1,0 +1,6 @@
+ ; set the plotting device to plot to a post-script file. 
+ set_plot, 'x' 
+ 
+ ; compile the GODDARD ASTRONOMY LIBRARY package. 
+ astrolib 
+ 

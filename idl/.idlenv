@@ -1,0 +1,48 @@
+#!/bin/bash
+# this is a modified version of Brian Lemaux's .idlenv file
+# establish my IDL startup file. 
+export IDL_STARTUP=~/.idlstartup 
+
+ # set the IDL directories. 
+export RSI_DIR=/Applications
+export IDL_DIR=/Applications/itt/idl71/
+export IDL_HELP_PATH=$IDL_DIR/help 
+  
+ # clear the path. 
+export IDL_PATH 
+ # add the base IDL library and examples to path. 
+export IDL_PATH=$IDL_PATH:+$IDL_DIR/lib 
+export IDL_PATH=$IDL_PATH:+$IDL_DIR/examples 
+ 
+  # add all cvs routines to path. 
+ # this includes both the UCB and SDSS routines, as  IDL_PATH is searched recursively. 
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/spec2d/
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/spec1d/
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/calib/
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/idlutils/goddard/pro
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/idlutils/pro
+#export IDL_PATH=$IDL_PATH:+~/work/codes/IDL #I am not sure what all he had in here, but I bet the following was in there since many of his spec2d code tweeks need the functions in this folder
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/idlprocs
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/lemauxcode
+export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/deimos
+
+
+ # essential directories for DEIMOS analysis 
+export IDLUTILS_DIR=~/Git/DEIMOS/idl/idlutils
+export DEEP_DIR=~/OneDrive/Programs/cvs 
+#location of the raw deimos fits files
+export DEIMOS_DATA=/sandbox/deimos/rawdata
+export CALIB_DATA=~/Git/DEIMOS/idl/calib
+export IDLSPEC2D_DIR=~/Git/DEIMOS/idl/spec2d
+export IDLSPEC1D_DIR=~/Git/DEIMOS/idl/spec1d
+# define directory where spec1d will create zresult folder to write results
+export D2_RESULTS=/sandbox/deimos
+  
+#alias rsilicense $IDL_DIR/bin/rsilicense
+alias idl=$IDL_DIR/bin/idl
+alias idlde=$IDL_DIR/bin/idlde
+alias idldeclient=$IDL_DIR/bin/idldeclient
+alias idlhelp=$IDL_DIR/bin/idlhelp
+alias idlman=$IDL_DIR/bin/idlman
+alias idlrpc=$IDL_DIR/bin/idlrpc
+alias idldemo=$IDL_DIR/bin/idldemo
