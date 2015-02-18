@@ -127,15 +127,16 @@ pro make_bintab_file, planfile, quick=quick
     print, '(make_bintab_file.pro) Error in extraction of mask design date!!' 
     ddumb = 0
   endif else begin
-; all masks made after the date July 25, 2002 have their botdist and
+; all masks made after the date July 25, 2002 have their botdist and		; Modified 3/26/14 BCL, was incorrectly switching topdist and botdist for some masks/slits
 ; topdist mixed up! 
-      if ( long(subdate[0]) eq 2002 and long(subdate[1]) ge 7 ) or $
-        ( long(subdate[0]) ge 2003 ) then begin
-          if long(subdate[0]) eq 2002 and $
-            long(subdate[1]) eq 7 and $
-            long(subdate[2]) lt 25 then ddumb = 0 $
-          else ddumb = 1
-      endif else ddumb = 0
+      ;if ( long(subdate[0]) eq 2002 and long(subdate[1]) ge 7 ) or $
+       ; ( long(subdate[0]) ge 2003 ) then begin
+       ;   if long(subdate[0]) eq 2002 and $
+       ;     long(subdate[1]) eq 7 and $
+       ;     long(subdate[2]) lt 25 then ddumb = 0 $
+       ;   else ddumb = 1
+      ;endif else ddumb = 0
+      ddumb = 0
   endelse
 
 ; write science frame header to bintab file  
@@ -150,8 +151,8 @@ pro make_bintab_file, planfile, quick=quick
 ; parse the header for the extension name.
     extname = strcompress(sxpar(hdr, 'EXTNAME'), /rem)
 ; FIX ERROR WITH TOPDIST and BOTDIST!
-    if extname eq 'SlitObjMap' and ddumb then begin
-      print, '(make_bintab_file.pro) Correcting error in mask design...'
+    if extname eq 'SlitObjMap' and ddumb then begin				; BCL: ddumb is now set to zero for all masks, this condition will never be satisfied. Not sure if this is 
+      print, '(make_bintab_file.pro) Correcting error in mask design...'	; valid for all masks, there may be some that need this condition fulfilled. If it comes up again, can test
       print, '(make_bintab_file.pro) Switching topdist and botdist.'
       tmpdist = bintab.topdist
       bintab.topdist = bintab.botdist
