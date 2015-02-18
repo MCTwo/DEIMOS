@@ -6,24 +6,64 @@ from __future__ import division
 import numpy
 import pyfits
 import tools
+import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/ciza4A/2013sep05/'
-binfile = 'ciza4A.bintabs.fits' # probably don't need this if have maskname
-maskname = 'ciza4A'
-zspecfile = 'zspec.dawson.ciza4A.2013-09-05.fits'
+path = '/sandbox/deimos/ciza1A/2013jul14/'
+maskname = 'ciza1A'
+zspecfile = 'zspec.dawson.ciza1A.final.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
-imgcat = '/Users/dawson/SkyDrive/Research/Clusters/CIZAJ2242/catalog/subaru_I_cat.txt' #path/name of the image catalog
+# image catalog in pandas csv format with first row as the header row
+imgcat = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/catalog/SubaruCFHT_Sextractor/I_ttype.txt' #path/name of the image catalog
 objkey = 'NUMBER' #ttype name of the unique object id column
 imgcoord = ('X_WORLD','Y_WORLD') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
-outputfile = '/sandbox/deimos/ciza4A/matchcat_ciza4A_subaru.txt'
+outputfile = '/sandbox/deimos/ciza1A/matchcat_ciza1A_subaru.txt'
+
+### Fits image file input and mask region file
+
+# Subaru image and visulation parameters
+file_fits = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/fits/optical/Subaru/I.fits'
+
+# Define image scale
+scale = 'log' #e.g. 'linear', 'log', 'power', etc. 
+# Define (min, max) pixel scale values
+scale_limits = (0,200)
+
+# Define Subaru and HST object region files
+region = '/Users/dawson/OneDrive/Observing/Keck2013a/CIZAJ2242/ciza_m1A.reg'
+
+# this scale is divided by the slitlength (in arcsec) to determine the zoom
+# for that object
+zoom_scale = 30
+
 ###########################
 ### PROGRAM
 ###########################
+## Setup the ds9 image
+# setup ds9
+# call ds9
+d = ds9.ds9()
+# turn off colorbar
+d.set('colorbar no')
+
+# load the subaru image in the first frame
+cmd = 'file '+file_fits
+d.set(cmd)
+
+## correct the WCS issues (deleted PV1_ and PV2_ values)
+#d.set('wcs replace Subaru.wcs')
+
+# change the scale to log and apply set limits
+cmd = 'scale '+scale
+d.set(cmd)
+cmd = 'scale limits {0} {1}'.format(scale_limits[0],scale_limits[1])
+d.set(cmd)
+
 # Gather the basic slit info tables from the bintabs.fits file
+binfile = maskname+'.bintabs.fits'
 hdubin = pyfits.open(path+binfile)
 # Target table information, similar to dsim .lst information
 tb_targets = hdubin[1].data
@@ -34,6 +74,8 @@ tb_slits = hdubin[3].data
 # Table that maps the id's of the previous two tables
 tb_map = hdubin[4].data
 
+## Work with the zspec results files
+
 # Read in the zspec file contents
 hduzspec = pyfits.open(path+'../../'+zspecfile)
 tb_zspec = hduzspec[1].data
@@ -42,24 +84,29 @@ tb_zspec = hduzspec[1].data
 slitnumbers = tb_slits.field('SLITNAME')
 
 # Load the image catalog
-cat_img = tools.readcatalog(imgcat)
-key_img = tools.readheader(imgcat)
+cat = tools.readcatalog(imgcat)
+key = tools.readheader(imgcat)
 
 #Create the ouput file and write header information
 fh = open(outputfile,'w')
 fh.write('#This catalog was created by slitcatmatch.py and matches deimos spectrographic\n')
 fh.write('#traces with a catalog of images.\n')
-fh.write('#ttype0 = maskname\n')
-fh.write('#ttype1 = slit\n')
-fh.write('#ttype2 = which_trace\n')
-fh.write('#ttype3 = y_trace\n')
-fh.write('#ttype4 = ra_trace\n')
-fh.write('#ttype5 = dec_trace\n')
-fh.write('#ttype6 = objid\n')
-fh.write('#ttype7 = ra_obj\n')
-fh.write('#ttype8 = dec_obj\n')
-fh.write('#ttype9 = matchdelta\n')
-fh.write('#ttype10 = mag\n')
+fh.write('#ttype0 = target_objid\n')
+fh.write('#ttype1 = z\n')
+fh.write('#ttype2 = zerr\n')
+fh.write('#ttype3 = quality\n')
+fh.write('#ttype4 = mask\n')
+fh.write('#ttype5 = slit\n')
+fh.write('#ttype6 = which_trace\n')
+fh.write('#ttype7 = y_trace\n')
+fh.write('#ttype8 = ra_trace\n')
+fh.write('#ttype9 = dec_trace\n')
+fh.write('#ttype10 = objid\n')
+fh.write('#ttype11 = ra_obj\n')
+fh.write('#ttype12 = dec_obj\n')
+fh.write('#ttype13 = mag_obj\n')
+fh.write('#ttype14 = matchdelta\n')
+fh.write('#ttype15 = comment\n')
 fh.close()
 def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     #Filter the tables keeping only the current slit
@@ -72,6 +119,9 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     tb_t = tb_targets[tb_targets.field('OBJECTID')==objectid]
     # object (e.g.: DLS photometric objid)
     obj = tb_t.field('OBJECT')[0]
+    # zspec info
+    # converting '00#' to '#' notation 
+    tb_zs = tb_zspec[tb_zspec.field('SLITNAME')==str(int(slit_i))]
 
     # Define the slit astrometric/geometric properties
     slitra = tb_s.field('SLITRA')[0]
@@ -79,6 +129,18 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     slitlen = tb_s.field('SLITLEN')[0]
     slitwid = tb_s.field('SLITWID')[0]
     slitpa = tb_s.field('SLITLPA')[0] #pa for long axis of the slit +ccw from north
+    if which_trace == 'primary':
+        # then this is the primary trace and the values are recorded in the zspec file
+        z = tb_zs.field('Z')[0]
+        zerr = tb_zs.field('Z_ERR')[0]
+        quality = tb_zs.field('ZQUALITY')[0]
+    else:
+        # then this is a serendip and the user will have to edit the file later
+        z = -88
+        zerr = -99
+        quality = -88
+    slitcomment = tb_zs.field('COMMENT')[0]
+    
     # Define the pa of the mask
     maskpa = tb_mask.field('PA_PNT')[0]
     # Determine the minimum coterminal angle of the slit respect to the mask
@@ -114,11 +176,15 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     ramax = slitra+slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
     decmin = slitdec-slitlen/(60.**2*2.)
     decmax = slitdec+slitlen/(60.**2*2.)
-    cat_flt = tools.filtercat(cat,key[coord[0]],ramin,ramax,verbose=False)
-    cat_flt = tools.filtercat(cat_flt,key[coord[1]],decmin,decmax,verbose=False)
-    N = numpy.shape(cat_flt)[0]
+    mask_cat_ra = numpy.logical_and(cat[:,key[coord[0]]]>ramin,
+                                    cat[:,key[coord[0]]]<ramax)
+    mask_cat_dec = numpy.logical_and(cat[:,key[coord[1]]]>decmin,
+                                     cat[:,key[coord[1]]]<decmax)
+    mask = numpy.logical_and(mask_cat_ra,mask_cat_dec)
+    cat_flt = cat[mask,:]
+    N = numpy.shape(cat_flt)[0]    
 
-    # Calculated the angular separation between all objects and the trace object
+    # Calculate the angular separation between all objects and the trace object
     j=0
     delta = numpy.zeros(N)
     for i in range(N):
@@ -136,58 +202,79 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
         match_dec = cat_flt[0,key[coord[1]]]
         match_delta = delta[0]
         match_mag = cat_flt[0,key[mag]]
-    elif j == 0:
-        if numpy.size(delta) != 0:
-            # sort match_delta smallest to largest
-            index = numpy.argsort(delta)
-            delta=delta[index]
-            cat_flt = cat_flt[index,:]
-            print 'slitcatmatch: No catalog matches were found for this trace.'
+    else:
+        # load slitmask regions
+        cmd = 'regions load all '+region
+        d.set(cmd)        
+        # pan to the current slit
+        cmd = 'pan to {0} {1} wcs fk5 degrees'.format(slitra,slitdec)
+        d.set(cmd)
+        # place the crosshair over the object of interest
+        cmd = 'crosshair {0} {1} wcs fk5 degrees'.format(ra_trace,dec_trace)
+        d.set(cmd)
+        # zoom in on the object
+        zoom = zoom_scale/slitlen
+        cmd = 'zoom to {0}'.format(zoom)
+        d.set(cmd)        
+        if j == 0:
+            if numpy.size(delta) != 0:
+                # sort match_delta smallest to largest
+                index = numpy.argsort(delta)
+                delta=delta[index]
+                cat_flt = cat_flt[index,:]
+                print 'slitcatmatch: No catalog matches were found for this trace.'
+                print 'Slit {0} {1}'.format(slit_i,which_trace)
+                print 'The closest objects to the trace are:'
+                print 'Object\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
+                for k in range(numpy.size(delta)):
+                    print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
+                    #display a region at the object's location, with label
+                    cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
+                    d.set('regions', cmd)
+                    
+                print '{0}\tSelect none.'.format(numpy.size(delta))
+                selection = raw_input('Enter the number of the correct object match: ')
+                if numpy.size(numpy.arange(k+1)==int(selection))==0:
+                    selection = rawinput("Input invalid. Please enter a valid number.: ")
+                if selection == str(numpy.size(delta)):
+                    # Don't associate the trace with an object
+                    match_id = match_ra = match_dec = match_delta = match_mag = -99
+                elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
+                    selection=int(selection)
+                    match_id = cat_flt[selection,key[objkey]]
+                    match_ra = cat_flt[selection,key[coord[0]]]
+                    match_dec = cat_flt[selection,key[coord[1]]]
+                    match_delta = delta[selection]
+                    match_mag = cat_flt[selection,key[mag]]
+            else:
+                print 'slitcatmatch: No catalog matches were found for this trace.'
+                print 'Slit {0} {1}'.format(slit_i,which_trace)
+                match_id = match_ra = match_dec = match_delta = match_mag = -99
+        elif j > 1:
+            cat_flt = cat_flt[delta<tolerance,:]
+            delta = delta[delta<tolerance]
+            print 'slitcatmatch: More than one matches satisfy the separation tolerence.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
-            print 'The closest objects to the trace are:'
-            print 'Object\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
-            for k in range(numpy.size(delta)):
+            print 'Match\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
+            for k in range(j):
                 print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
-            print '{0}\tSelect none.'.format(numpy.size(delta))
-            selection = raw_input('Enter the number of the correct object match: ')
+                #display a region at the object's location, with label
+                cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
+                d.set('regions', cmd)            
+            print '{0}\tSelect none.'.format(j)
+            selection = raw_input('Enter the number of the correct match: ')
             if numpy.size(numpy.arange(k+1)==int(selection))==0:
                 selection = rawinput("Input invalid. Please enter a valid number.: ")
-            if selection == str(numpy.size(delta)):
+            if selection == str(j):
                 # Don't associate the trace with an object
                 match_id = match_ra = match_dec = match_delta = match_mag = -99
             elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
                 selection=int(selection)
-                match_id = cat_flt[selection,key_img[objkey]]
-                match_ra = cat_flt[selection,key_img[coord[0]]]
-                match_dec = cat_flt[selection,key_img[coord[1]]]
+                match_id = cat_flt[selection,key[objkey]]
+                match_ra = cat_flt[selection,key[coord[0]]]
+                match_dec = cat_flt[selection,key[coord[1]]]
                 match_delta = delta[selection]
-                match_mag = cat_flt[selection,key_img[mag]]
-        else:
-            print 'slitcatmatch: No catalog matches were found for this trace.'
-            print 'Slit {0} {1}'.format(slit_i,which_trace)
-            match_id = match_ra = match_dec = match_delta = match_mag = -99
-    elif j > 1:
-        cat_flt = cat_flt[delta<tolerance,:]
-        delta = delta[delta<tolerance]
-        print 'slitcatmatch: More than one matches satisfy the separation tolerence.'
-        print 'Slit {0} {1}'.format(slit_i,which_trace)
-        print 'Match\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
-        for k in range(j):
-            print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
-        print '{0}\tSelect none.'.format(j)
-        selection = raw_input('Enter the number of the correct match: ')
-        if numpy.size(numpy.arange(k+1)==int(selection))==0:
-            selection = rawinput("Input invalid. Please enter a valid number.: ")
-        if selection == str(j):
-            # Don't associate the trace with an object
-            match_id = match_ra = match_dec = match_delta = match_mag = -99
-        elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
-            selection=int(selection)
-            match_id = cat_flt[selection,key_img[objkey]]
-            match_ra = cat_flt[selection,key_img[coord[0]]]
-            match_dec = cat_flt[selection,key_img[coord[1]]]
-            match_delta = delta[selection]
-            match_mag = cat_flt[selection,key_img[mag]]
+                match_mag = cat_flt[selection,key[mag]]
 #    print maskname
 #    print slit_i
 #    print which_trace
@@ -198,10 +285,13 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
 #    print match_ra
 #    print match_dec
 #    print match_delta
+
+    #delete all the regions
+    cmd = 'regions delete all'
+    d.set(cmd)    
+
     fh = open(outputfile,'a')
-    fh.write('{0}\t{1}\t{2}\t{3:0.1f}\t{4:0.6f}\t{5:0.5f}\t{6}\t{7:0.6f}\t{8:0.5f}\t{9:0.2f}\t{10:0.1f}\n'
-            .format(maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,
-                    match_id,match_ra,match_dec,match_delta,match_mag))
+    fh.write('{0}\t{1:0.6f}\t{2}\t{3:0.0f}\t{4}\t{5}\t{6}\t{7:0.1f}\t{8:0.6f}\t{9:0.5f}\t{10:0.0f}\t{11:0.6f}\t{12:0.5f}\t{13:0.2f}\t"{14}"\n'.format(obj,z,zerr,quality,maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,match_id,match_ra,match_dec,match_delta,slitcomment))
     fh.close()
     
 # Analyze each trace for all slits and associate with photometric object
@@ -232,7 +322,7 @@ for slit_i in slitnumbers:
         print 'slitcatmatch: There is no spec1d trace file for slit number {}'.format(slit_i)
         continue
     else:
-        match(slit_i,'primary',cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+        match(slit_i,'primary',cat,key,imgcoord,objkey,mag,tolerance,outputfile)
     
     # check if there is a serendip trace and if so then attempt to match with catalog
     # works for up to 5 serendips
@@ -243,4 +333,5 @@ for slit_i in slitnumbers:
             continue
         else:
             # the file exists, try to match the object
-            match(slit_i,'serendip{}'.format(i),cat_img,key_img,imgcoord,objkey,mag,tolerance,outputfile)
+            match(slit_i,'serendip{}'.format(i),cat,key,imgcoord,objkey,mag,tolerance,outputfile)
+print 'slitcatmatch complete'
