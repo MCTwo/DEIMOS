@@ -29,7 +29,7 @@ export IDL_PATH=$IDL_PATH:+~/Git/DEIMOS/idl/deimos
 
  # essential directories for DEIMOS analysis 
 export IDLUTILS_DIR=~/Git/DEIMOS/idl/idlutils
-export DEEP_DIR=~/OneDrive/Programs/cvs 
+export DEEP_DIR=~/Git/DEIMOS/idl
 #location of the raw deimos fits files
 export DEIMOS_DATA=/sandbox/deimos/rawdata
 export CALIB_DATA=~/Git/DEIMOS/idl/calib
