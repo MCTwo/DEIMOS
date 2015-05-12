@@ -6,26 +6,26 @@ from __future__ import division
 import numpy
 import pyfits
 import tools
-import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
+import pyds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/ciza1A/2013jul14/'
-maskname = 'ciza1A'
-zspecfile = 'zspec.dawson.ciza1A.final.fits'
+path = '/sandbox/deimos/34111A/2013dec03/'
+maskname = '34111A'
+zspecfile = 'zspec.ngolovich.34111A.2013-12-03.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
 # image catalog in pandas csv format with first row as the header row
-imgcat = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/catalog/SubaruCFHT_Sextractor/I_ttype.txt' #path/name of the image catalog
+imgcat = '/sandbox/Subaru/a3411/A3411_r_ttype.txt' #path/name of the image catalog
 objkey = 'NUMBER' #ttype name of the unique object id column
-imgcoord = ('X_WORLD','Y_WORLD') #ttype name of the ra and dec columns in the image catalog
+imgcoord = ('ALPHA_J2000','DELTA_J2000') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
-outputfile = '/sandbox/deimos/ciza1A/matchcat_ciza1A_subaru.txt'
+outputfile = '/sandbox/deimos/34111A/matchcat_34111A_subaru.txt'
 
 ### Fits image file input and mask region file
 
 # Subaru image and visulation parameters
-file_fits = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/fits/optical/Subaru/I.fits'
+file_fits = '/sandbox/Subaru/a3411/A3411_r.fits'
 
 # Define image scale
 scale = 'log' #e.g. 'linear', 'log', 'power', etc. 
@@ -33,7 +33,7 @@ scale = 'log' #e.g. 'linear', 'log', 'power', etc.
 scale_limits = (0,200)
 
 # Define Subaru and HST object region files
-region = '/Users/dawson/OneDrive/Observing/Keck2013a/CIZAJ2242/ciza_m1A.reg'
+region = '/Users/dawson/OneDrive/Observing/Keck2013b/2013dec/A3411/a3411_m1A.reg'
 
 # this scale is divided by the slitlength (in arcsec) to determine the zoom
 # for that object
@@ -43,9 +43,9 @@ zoom_scale = 30
 ### PROGRAM
 ###########################
 ## Setup the ds9 image
-# setup ds9
-# call ds9
-d = ds9.ds9()
+# setup pyds9
+# call pyds9
+d = pyds9.DS9()
 # turn off colorbar
 d.set('colorbar no')
 
