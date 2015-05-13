@@ -11,16 +11,16 @@ import pyds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Hom
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/34112A/2013dec03/'
-maskname = '34112A'
-zspecfile = 'zspec.ngolovich.34112A.2013-12-03.fits'
+path = '/sandbox/deimos/34113A/2013dec04/'
+maskname = '34113A'
+zspecfile = 'zspec.ngolovich.34113A.2013-12-04.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
 # image catalog in pandas csv format with first row as the header row
 imgcat = '/sandbox/Subaru/a3411/A3411_r_ttype.txt' #path/name of the image catalog
 objkey = 'NUMBER' #ttype name of the unique object id column
 imgcoord = ('ALPHA_J2000','DELTA_J2000') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
-outputfile = '/sandbox/deimos/34112A/matchcat_34112A_subaru.txt'
+outputfile = '/sandbox/deimos/34112A/matchcat_34113A_subaru.txt'
 
 ### Fits image file input and mask region file
 
@@ -33,7 +33,7 @@ scale = 'log' #e.g. 'linear', 'log', 'power', etc.
 scale_limits = (0,200)
 
 # Define Subaru and HST object region files
-region = '/Users/dawson/OneDrive/Observing/Keck2013b/2013dec/A3411/a3411_m2A.reg'
+region = '/Users/dawson/OneDrive/Observing/Keck2013b/2013dec/A3411/a3411_m3A.reg'
 
 # this scale is divided by the slitlength (in arcsec) to determine the zoom
 # for that object
