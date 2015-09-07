@@ -5,6 +5,7 @@ mask with objects from an image catalog.
 from __future__ import division
 import numpy
 import pyfits
+import pandas
 import tools
 import pyds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
@@ -84,8 +85,7 @@ tb_zspec = hduzspec[1].data
 slitnumbers = tb_slits.field('SLITNAME')
 
 # Load the image catalog
-cat = tools.readcatalog(imgcat)
-key = tools.readheader(imgcat)
+cat = pandas.read_csv(imgcat)
 
 #Create the ouput file and write header information
 fh = open(outputfile,'w')
@@ -176,32 +176,32 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     ramax = slitra+slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
     decmin = slitdec-slitlen/(60.**2*2.)
     decmax = slitdec+slitlen/(60.**2*2.)
-    mask_cat_ra = numpy.logical_and(cat[:,key[coord[0]]]>ramin,
-                                    cat[:,key[coord[0]]]<ramax)
-    mask_cat_dec = numpy.logical_and(cat[:,key[coord[1]]]>decmin,
-                                     cat[:,key[coord[1]]]<decmax)
+    mask_cat_ra = numpy.logical_and(cat[coord[0]]>ramin,
+                                    cat[coord[0]]<ramax)
+    mask_cat_dec = numpy.logical_and(cat[coord[1]]>decmin,
+                                     cat[coord[1]]<decmax)
     mask = numpy.logical_and(mask_cat_ra,mask_cat_dec)
-    cat_flt = cat[mask,:]
+    cat_flt = cat[mask]
     N = numpy.shape(cat_flt)[0]
 
     # Calculate the angular separation between all objects and the trace object
     j=0
     delta = numpy.zeros(N)
     for i in range(N):
-        ra = cat_flt[i,key[coord[0]]]
-        dec = cat_flt[i,key[coord[1]]]
+        ra = cat_flt[coord[0]]
+        dec = cat_flt[coord[1]]
         delta[i] = numpy.abs(tools.angdist(ra,dec,ra_trace,dec_trace)*60**2)
         if delta[i] < tolerance:
             j+=1
     if j==1:
         #there was a single match satisfying the tolerence
-        cat_flt = cat_flt[delta<tolerance,:]
+        cat_flt = cat_flt[delta<tolerance]
         delta = delta[delta<tolerance]
-        match_id = cat_flt[0,key[objkey]]
-        match_ra = cat_flt[0,key[coord[0]]]
-        match_dec = cat_flt[0,key[coord[1]]]
+        match_id = cat_flt[objkey]
+        match_ra = cat_flt[coord[0]]
+        match_dec = cat_flt[coord[1]]
         match_delta = delta[0]
-        match_mag = cat_flt[0,key[mag]]
+        match_mag = cat_flt[mag][0]
     else:
         # load slitmask regions
         cmd = 'regions load all '+region
@@ -221,15 +221,15 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                 # sort match_delta smallest to largest
                 index = numpy.argsort(delta)
                 delta=delta[index]
-                cat_flt = cat_flt[index,:]
+                cat_flt = cat_flt[index]
                 print 'slitcatmatch: No catalog matches were found for this trace.'
                 print 'Slit {0} {1}'.format(slit_i,which_trace)
                 print 'The closest objects to the trace are:'
                 print 'Object\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
                 for k in range(numpy.size(delta)):
-                    print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
+                    print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[coord[0]][k],cat_flt[coord[1]][k],delta[k],cat_flt[mag][k])
                     #display a region at the object's location, with label
-                    cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
+                    cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[coord[0]][k],cat_flt[coord[1]][k])+' # color=red text={'+'{0}'.format(k)+'}'
                     d.set('regions', cmd)
 
                 print '{0}\tSelect none.'.format(numpy.size(delta))
@@ -241,25 +241,25 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                     match_id = match_ra = match_dec = match_delta = match_mag = -99
                 elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
                     selection=int(selection)
-                    match_id = cat_flt[selection,key[objkey]]
-                    match_ra = cat_flt[selection,key[coord[0]]]
-                    match_dec = cat_flt[selection,key[coord[1]]]
+                    match_id = cat_flt[objkey][selection]
+                    match_ra = cat_flt[coord[0]][selection]
+                    match_dec = cat_flt[coord[1]][selection]
                     match_delta = delta[selection]
-                    match_mag = cat_flt[selection,key[mag]]
+                    match_mag = cat_flt[mag][selection]
             else:
                 print 'slitcatmatch: No catalog matches were found for this trace.'
                 print 'Slit {0} {1}'.format(slit_i,which_trace)
                 match_id = match_ra = match_dec = match_delta = match_mag = -99
         elif j > 1:
-            cat_flt = cat_flt[delta<tolerance,:]
+            cat_flt = cat_flt[delta<tolerance]
             delta = delta[delta<tolerance]
             print 'slitcatmatch: More than one matches satisfy the separation tolerence.'
             print 'Slit {0} {1}'.format(slit_i,which_trace)
             print 'Match\tRA\t\tdec\tSeparation (arcsec)\tMagnitude'
             for k in range(j):
-                print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
+                print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[coord[0]][k],cat_flt[coord[1]][k],delta[k],cat_flt[mag][k])
                 #display a region at the object's location, with label
-                cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
+                cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[coord[0]][k],cat_flt[coord[1]][k])+' # color=red text={'+'{0}'.format(k)+'}'
                 d.set('regions', cmd)
             print '{0}\tSelect none.'.format(j)
             selection = raw_input('Enter the number of the correct match: ')
@@ -270,11 +270,11 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                 match_id = match_ra = match_dec = match_delta = match_mag = -99
             elif numpy.size(numpy.arange(k+1)==int(selection))!=0:
                 selection=int(selection)
-                match_id = cat_flt[selection,key[objkey]]
-                match_ra = cat_flt[selection,key[coord[0]]]
-                match_dec = cat_flt[selection,key[coord[1]]]
+                match_id = cat_flt[objkey][selection]
+                match_ra = cat_flt[coord[0]][selection]
+                match_dec = cat_flt[coord[1]][selection]
                 match_delta = delta[selection]
-                match_mag = cat_flt[selection,key[mag]]
+                match_mag = cat_flt[mag][selection]
 #    print maskname
 #    print slit_i
 #    print which_trace
