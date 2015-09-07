@@ -11,29 +11,29 @@ import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.
 ###########################
 ### USER INPUTS
 ###########################
-path = '/sandbox/deimos/ciza1A/2013jul14/'
-maskname = 'ciza1A'
-zspecfile = 'zspec.dawson.ciza1A.final.fits'
+path = '/sandbox/deimos/z1851a/2014jun22/'
+maskname = 'z1851a'
+zspecfile = 'zspec.ngolovich.z1851a.2014-06-22.fits'
 tolerance = 2 #matching tolerance (arcsec) any objects within this separation will be considered a match
 # image catalog in pandas csv format with first row as the header row
-imgcat = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/catalog/SubaruCFHT_Sextractor/I_ttype.txt' #path/name of the image catalog
+imgcat = '/Users/dawson/OneDrive/Research/Clusters/ZwCL1856/catalogs/Gemini/unmosaic/zwcl1856_join_r.csv' #path/name of the image catalog
 objkey = 'NUMBER' #ttype name of the unique object id column
 imgcoord = ('X_WORLD','Y_WORLD') #ttype name of the ra and dec columns in the image catalog
 mag = 'MAG_AUTO'
-outputfile = '/sandbox/deimos/ciza1A/matchcat_ciza1A_subaru.txt'
+outputfile = '/sandbox/deimos/z1851a/matchcat_z1851a_gmos.txt'
 
 ### Fits image file input and mask region file
 
 # Subaru image and visulation parameters
-file_fits = '/Users/dawson/OneDrive/Research/Clusters/CIZAJ2242/fits/optical/Subaru/I.fits'
+file_fits = '/Users/dawson/OneDrive/Research/Clusters/ZwCL1856/fits/optical/Gemini/mosaic/swarp_median_r.fits'
 
 # Define image scale
-scale = 'log' #e.g. 'linear', 'log', 'power', etc. 
+scale = 'log' #e.g. 'linear', 'log', 'power', etc.
 # Define (min, max) pixel scale values
-scale_limits = (0,200)
+scale_limits = (38,2000)
 
-# Define Subaru and HST object region files
-region = '/Users/dawson/OneDrive/Observing/Keck2013a/CIZAJ2242/ciza_m1A.reg'
+# Define slitmask region files
+region = '/Users/dawson/OneDrive/Observing/Keck2014a/June2014/ZwCL1856/zwcl1856_m1A.reg'
 
 # this scale is divided by the slitlength (in arcsec) to determine the zoom
 # for that object
@@ -120,7 +120,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     # object (e.g.: DLS photometric objid)
     obj = tb_t.field('OBJECT')[0]
     # zspec info
-    # converting '00#' to '#' notation 
+    # converting '00#' to '#' notation
     tb_zs = tb_zspec[tb_zspec.field('SLITNAME')==str(int(slit_i))]
 
     # Define the slit astrometric/geometric properties
@@ -140,12 +140,12 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
         zerr = -99
         quality = -88
     slitcomment = tb_zs.field('COMMENT')[0]
-    
+
     # Define the pa of the mask
     maskpa = tb_mask.field('PA_PNT')[0]
     # Determine the minimum coterminal angle of the slit respect to the mask
     phi = tools.coterminal(slitpa-maskpa)
-    
+
     # read in the primary trace information
     if which_trace == 'primary':
         hdutrace = pyfits.open(path+'spec1d.{0}.{1}.{2}.fits'.format(maskname,slit_i,obj))
@@ -168,9 +168,9 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     else:
         #then zspec treats the slit as righ side up and y is measured with respect to the bottom of the slit
         ra_trace,dec_trace = tools.angendpt(slitra,slitdec,dc/60.,slitpa)
-    
+
     # Try to find a match within the image catalog
-    
+
     # Do a quick trim of the catalog to reduce calculation time
     ramin = slitra-slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
     ramax = slitra+slitlen/(60.**2*2.*numpy.cos(slitdec*numpy.pi/180.))
@@ -182,7 +182,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                                      cat[:,key[coord[1]]]<decmax)
     mask = numpy.logical_and(mask_cat_ra,mask_cat_dec)
     cat_flt = cat[mask,:]
-    N = numpy.shape(cat_flt)[0]    
+    N = numpy.shape(cat_flt)[0]
 
     # Calculate the angular separation between all objects and the trace object
     j=0
@@ -194,7 +194,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
         if delta[i] < tolerance:
             j+=1
     if j==1:
-        #there was a single match satisfying the tolerence 
+        #there was a single match satisfying the tolerence
         cat_flt = cat_flt[delta<tolerance,:]
         delta = delta[delta<tolerance]
         match_id = cat_flt[0,key[objkey]]
@@ -205,7 +205,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
     else:
         # load slitmask regions
         cmd = 'regions load all '+region
-        d.set(cmd)        
+        d.set(cmd)
         # pan to the current slit
         cmd = 'pan to {0} {1} wcs fk5 degrees'.format(slitra,slitdec)
         d.set(cmd)
@@ -215,7 +215,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
         # zoom in on the object
         zoom = zoom_scale/slitlen
         cmd = 'zoom to {0}'.format(zoom)
-        d.set(cmd)        
+        d.set(cmd)
         if j == 0:
             if numpy.size(delta) != 0:
                 # sort match_delta smallest to largest
@@ -231,7 +231,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                     #display a region at the object's location, with label
                     cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
                     d.set('regions', cmd)
-                    
+
                 print '{0}\tSelect none.'.format(numpy.size(delta))
                 selection = raw_input('Enter the number of the correct object match: ')
                 if numpy.size(numpy.arange(k+1)==int(selection))==0:
@@ -260,7 +260,7 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
                 print '{0}\t{1:0.5f}\t{2:0.4f}\t{3:0.3f}\t{4:0.1f}'.format(k,cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]],delta[k],cat_flt[k,key[mag]])
                 #display a region at the object's location, with label
                 cmd = 'fk5; circle point {0:0.6f} {1:0.5f}'.format(cat_flt[k,key[coord[0]]],cat_flt[k,key[coord[1]]])+' # color=red text={'+'{0}'.format(k)+'}'
-                d.set('regions', cmd)            
+                d.set('regions', cmd)
             print '{0}\tSelect none.'.format(j)
             selection = raw_input('Enter the number of the correct match: ')
             if numpy.size(numpy.arange(k+1)==int(selection))==0:
@@ -288,12 +288,12 @@ def match(slit_i,which_trace,cat,key,coord,objkey,mag,tolerance,outputfile):
 
     #delete all the regions
     cmd = 'regions delete all'
-    d.set(cmd)    
+    d.set(cmd)
 
     fh = open(outputfile,'a')
     fh.write('{0}\t{1:0.6f}\t{2}\t{3:0.0f}\t{4}\t{5}\t{6}\t{7:0.1f}\t{8:0.6f}\t{9:0.5f}\t{10:0.0f}\t{11:0.6f}\t{12:0.5f}\t{13:0.2f}\t"{14}"\n'.format(obj,z,zerr,quality,maskname,slit_i,which_trace,y/pixscale,ra_trace,dec_trace,match_id,match_ra,match_dec,match_delta,slitcomment))
     fh.close()
-    
+
 # Analyze each trace for all slits and associate with photometric object
 for slit_i in slitnumbers:
     #check if object is a science target or just an alignment star
@@ -323,7 +323,7 @@ for slit_i in slitnumbers:
         continue
     else:
         match(slit_i,'primary',cat,key,imgcoord,objkey,mag,tolerance,outputfile)
-    
+
     # check if there is a serendip trace and if so then attempt to match with catalog
     # works for up to 5 serendips
     for i in range(1,6):
