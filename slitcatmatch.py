@@ -45,7 +45,7 @@ zoom_scale = 30
 ## Setup the ds9 image
 # setup ds9
 # call ds9
-d = pyds9.Ds9()
+d = pyds9.DS9()
 # turn off colorbar
 d.set('colorbar no')
 
