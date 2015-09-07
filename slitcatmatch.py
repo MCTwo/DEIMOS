@@ -6,7 +6,7 @@ from __future__ import division
 import numpy
 import pyfits
 import tools
-import ds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
+import pyds9 # ds9 and pyds9 should be installed from http://ds9.si.edu/site/Home.html
 
 ###########################
 ### USER INPUTS
@@ -45,7 +45,7 @@ zoom_scale = 30
 ## Setup the ds9 image
 # setup ds9
 # call ds9
-d = ds9.ds9()
+d = pyds9.Ds9()
 # turn off colorbar
 d.set('colorbar no')
 
