@@ -119,7 +119,9 @@ pro deimos_trace_crude, im, tset1, tset2, imgbin, $
   yrow = edge[*, ystart]
 
    thresh = 5*djsig(yrow[useful])
-
+   ;print, yrow[useful]
+   if thresh gt 10000 then thresh = 7800.		; Added BCL 7/29/16, for issues with flats that have >55000 counts near edges
+  print, 'WARNING: Threshold counts for separation between slits set very high, likely spurious high values near edge of chip, trying a more reasonable value...'
   print, 'Slit edge trace thresh: ', thresh
 
 
